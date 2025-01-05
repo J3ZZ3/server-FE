@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 
 export default function RestaurantListScreen() {
   const { token } = useLocalSearchParams();
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -62,11 +63,14 @@ export default function RestaurantListScreen() {
         data={restaurants}
         keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         renderItem={({ item }) => (
-          <View style={styles.restaurantItem}>
+          <TouchableOpacity 
+            style={styles.restaurantItem} 
+            onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id })}
+          >
             <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
             <Text>{item.cuisine || 'Cuisine not specified'}</Text>
             <Text>{item.location || 'Location not specified'}</Text>
-          </View>
+          </TouchableOpacity>
         )}
       />
     </View>

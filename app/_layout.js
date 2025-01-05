@@ -24,6 +24,13 @@ export default function Layout() {
           headerBackVisible: false 
         }} 
       />
+      <Stack.Screen 
+        name="RestaurantDetail" 
+        options={{ 
+          title: "Restaurant Details",
+          headerShown: true 
+        }} 
+      />
     </Stack>
   );
 } 

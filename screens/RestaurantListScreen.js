@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 
 const RestaurantListScreen = ({ route }) => {
   const { token } = route.params;
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchRestaurants = async () => {
@@ -59,9 +61,9 @@ const RestaurantListScreen = ({ route }) => {
     <View style={styles.container}>
       <FlatList
         data={restaurants}
-        keyExtractor={(item) => item._id?.toString() || Math.random().toString()} // Fallback for missing id
+        keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         renderItem={({ item }) => (
-          <View style={styles.restaurantItem}>
+          <View style={styles.restaurantItem} onTouchEnd={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id })}>
             <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
             <Text>{item.cuisine || 'Cuisine not specified'}</Text>
             <Text>{item.location || 'Location not specified'}</Text>
