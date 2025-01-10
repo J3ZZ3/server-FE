@@ -65,7 +65,7 @@ export default function RestaurantListScreen() {
         renderItem={({ item }) => (
           <TouchableOpacity 
             style={styles.restaurantItem} 
-            onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id })}
+            onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id, token })}
           >
             <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
             <Text>{item.cuisine || 'Cuisine not specified'}</Text>
