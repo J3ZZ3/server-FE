@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
 
-export default function LoginScreen() {
-  const router = useRouter();
+const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -29,10 +27,7 @@ export default function LoginScreen() {
       console.log('Login successful, token received:', token);
       
       // Navigate to Restaurants screen with the token
-      router.replace({
-        pathname: '/restaurants',
-        params: { token }
-      });
+      navigation.replace('Restaurants', { token });
     } catch (err) {
       console.error('Login error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -43,7 +38,6 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -63,17 +57,11 @@ export default function LoginScreen() {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <>
-          <Button title="Login" onPress={handleLogin} />
-          <View style={styles.registerLink}>
-            <Text>Don't have an account? </Text>
-            <Button title="Register" onPress={() => router.push('/register')} />
-          </View>
-        </>
+        <Button title="Login" onPress={handleLogin} />
       )}
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -81,12 +69,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
   },
   input: {
     height: 40,
@@ -101,10 +83,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-  registerLink: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });
+
+export default LoginScreen;

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
-export default function RestaurantListScreen() {
-  const { token } = useLocalSearchParams();
+const RestaurantListScreen = ({ route }) => {
+  const { token } = route.params;
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,7 +14,7 @@ export default function RestaurantListScreen() {
     const fetchRestaurants = async () => {
       try {
         console.log('Fetching restaurants with token:', token);
-        const response = await axios.get('https://restaurant-server-5htc.onrender.com/api/restaurants', {
+        const response = await axios.get('https://restaurant-server-2-7mo0.onrender.com/api/restaurants', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -63,19 +63,16 @@ export default function RestaurantListScreen() {
         data={restaurants}
         keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.restaurantItem} 
-            onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id, token })}
-          >
+          <View style={styles.restaurantItem} onTouchEnd={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id })}>
             <Text style={styles.restaurantName}>{item.name || 'Unnamed Restaurant'}</Text>
             <Text>{item.cuisine || 'Cuisine not specified'}</Text>
             <Text>{item.location || 'Location not specified'}</Text>
-          </TouchableOpacity>
+          </View>
         )}
       />
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -106,4 +103,6 @@ const styles = StyleSheet.create({
     color: 'red',
     textAlign: 'center',
   },
-}); 
+});
+
+export default RestaurantListScreen;

@@ -20,7 +20,7 @@ const RestaurantDetailScreen = () => {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await axios.get(`https://restaurant-server-5htc.onrender.com/api/restaurants/${restaurantId}`);
+        const response = await axios.get(`https://restaurant-server-2-7mo0.onrender.com/api/restaurants/${restaurantId}`);
         setRestaurant(response.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch restaurant details');
