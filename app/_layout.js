@@ -38,6 +38,14 @@ export default function Layout() {
           headerShown: true 
         }} 
       />
+      <Stack.Screen 
+        name="ReservationDetail" 
+        options={{ 
+          title: "Reservation Details",
+          headerShown: true 
+        }} 
+      />
+      
     </Stack>
   );
 } 

@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 
 const UserReservations = () => {
   const { token } = useLocalSearchParams(); // Get token from params
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchReservations = async () => {
@@ -61,12 +62,15 @@ const UserReservations = () => {
         data={reservations}
         keyExtractor={(item) => item._id?.toString() || Math.random().toString()}
         renderItem={({ item }) => (
-          <View style={styles.reservationItem}>
-            <Text style={styles.restaurantName}>{item.restaurantId ? item.restaurantId.name : 'Restaurant not found'}</Text>
+          <TouchableOpacity 
+            style={styles.reservationItem} 
+            onPress={() => navigation.navigate('ReservationDetail', { reservationId: item._id, token })}
+          >
+            <Text style={styles.restaurantName}>{item.restaurantId.name}</Text>
             <Text>Date: {new Date(item.date).toLocaleDateString()}</Text>
             <Text>Time: {item.timeSlot}</Text>
-            <Text>Guests: {item.numberOfGuests || 'N/A'}</Text>
-          </View>
+            <Text>Guests: {item.numberOfGuests}</Text>
+          </TouchableOpacity>
         )}
       />
     </View>

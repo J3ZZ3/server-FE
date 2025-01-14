@@ -3,6 +3,7 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity }
 import axios from 'axios';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { FAB } from 'react-native-paper';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export default function RestaurantListScreen() {
   const { token } = useLocalSearchParams();
@@ -33,7 +34,9 @@ export default function RestaurantListScreen() {
     };
 
     fetchRestaurants();
-  }, [token]);
+
+    
+  }, [token, navigation]);
 
   if (loading) {
     return (
