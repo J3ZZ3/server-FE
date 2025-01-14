@@ -3,13 +3,12 @@ import { View, TextInput, Button, Text, StyleSheet, ActivityIndicator } from 're
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 
-export default function RegisterScreen() {
+export default function AdminRegisterScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [secretCode, setSecretCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -28,20 +27,19 @@ export default function RegisterScreen() {
     setError('');
 
     try {
-      const isAdmin = secretCode === 'PERSONA3';
       const response = await axios.post('https://restaurant-server-2-7mo0.onrender.com/api/auth/register', {
         email,
         password,
         name,
-        role: isAdmin ? 'admin' : 'user',
+        role: 'admin', // Set role to admin
       });
       
-      console.log('Registration successful:', response.data);
+      console.log('Admin registration successful:', response.data);
       
       // Navigate back to login
       router.replace('/');
     } catch (err) {
-      console.error('Registration error:', err.response?.data || err.message);
+      console.error('Admin registration error:', err.response?.data || err.message);
       setError(err.response?.data?.message || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
@@ -50,7 +48,7 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+      <Text style={styles.title}>Admin Create Account</Text>
       <TextInput
         style={styles.input}
         placeholder="Full Name"
@@ -80,25 +78,11 @@ export default function RegisterScreen() {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Secret Code (for Admin)"
-        value={secretCode}
-        onChangeText={setSecretCode}
-        autoCapitalize="none"
-      />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <>
-          <Button title="Register" onPress={handleRegister} />
-          <Button title="Register as Admin" onPress={() => router.replace('/AdminRegister')} />
-          <View style={styles.loginLink}>
-            <Text>Already have an account? </Text>
-            <Button title="Login" onPress={() => router.replace('/')} />
-          </View>
-        </>
+        <Button title="Register" onPress={handleRegister} />
       )}
     </View>
   );
@@ -129,11 +113,5 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 12,
     textAlign: 'center',
-  },
-  loginLink: {
-    marginTop: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 }); 

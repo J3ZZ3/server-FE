@@ -18,6 +18,20 @@ export default function Layout() {
         }} 
       />
       <Stack.Screen 
+        name="AdminRestaurants" 
+        options={{ 
+          title: "Admin Restaurants",
+          headerShown: true 
+        }} 
+      />
+      <Stack.Screen 
+        name="AdminRestaurantDetail"
+        options={{ 
+          title: "Admin Restaurant Details",
+          headerShown: true 
+        }} 
+      />
+      <Stack.Screen 
         name="restaurants" 
         options={{ 
           title: "Restaurants",
@@ -45,7 +59,13 @@ export default function Layout() {
           headerShown: true 
         }} 
       />
-      
+      <Stack.Screen 
+        name="EditRestaurant" 
+        options={{ 
+          title: "Edit Restaurant",
+          headerShown: true 
+        }} 
+      />
     </Stack>
   );
 } 

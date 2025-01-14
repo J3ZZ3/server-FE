@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "YourAppName",
-    "slug": "your-app-slug",
+    "name": "reserved",
+    "slug": "reserved",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "2cc319d6-e61b-4f95-ad91-f355efe11dfc"
+        "projectId": "17eb8a93-7d0c-4c4f-ba15-b031e8039aac"
       }
     }
   }

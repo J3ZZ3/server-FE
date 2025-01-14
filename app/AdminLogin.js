@@ -3,7 +3,7 @@ import { View, TextInput, Button, Text, StyleSheet, ActivityIndicator } from 're
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 
-export default function LoginScreen() {
+export default function AdminLoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -15,7 +15,7 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const response = await axios.post('https://restaurant-server-2-7mo0.onrender.com/api/auth/login', {
+      const response = await axios.post('https://restaurant-server-2-7mo0.onrender.com/api/auth/admin/login', {
         email,
         password,
       });
@@ -35,7 +35,7 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+      <Text style={styles.title}>Admin Login</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -55,10 +55,7 @@ export default function LoginScreen() {
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <>
-          <Button title="Login" onPress={handleLogin} />
-          <Button title="Login as Admin" onPress={() => router.replace('/AdminLogin')} />
-        </>
+        <Button title="Login" onPress={handleLogin} />
       )}
     </View>
   );
@@ -90,4 +87,4 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
-});
+}); 
