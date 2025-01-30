@@ -69,23 +69,16 @@ export default function RegisterScreen() {
       <TextInput
         style={styles.input}
         placeholder="Password"
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
       />
       <TextInput
         style={styles.input}
         placeholder="Confirm Password"
-        secureTextEntry
         value={confirmPassword}
         onChangeText={setConfirmPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Secret Code (for Admin)"
-        value={secretCode}
-        onChangeText={setSecretCode}
-        autoCapitalize="none"
+        secureTextEntry
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {loading ? (
@@ -93,7 +86,6 @@ export default function RegisterScreen() {
       ) : (
         <>
           <Button title="Register" onPress={handleRegister} />
-          <Button title="Register as Admin" onPress={() => router.replace('/AdminRegister')} />
           <View style={styles.loginLink}>
             <Text>Already have an account? </Text>
             <Button title="Login" onPress={() => router.replace('/')} />

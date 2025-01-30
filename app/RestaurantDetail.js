@@ -3,6 +3,7 @@ import { View, Text, Button, StyleSheet, ActivityIndicator, Alert, TextInput, Li
 import axios from 'axios';
 import { useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useStripe } from '@stripe/stripe-react-native';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -16,6 +17,8 @@ const RestaurantDetailScreen = () => {
   const [guests, setGuests] = useState('');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
@@ -32,21 +35,94 @@ const RestaurantDetailScreen = () => {
     fetchRestaurantDetails();
   }, [restaurantId]);
 
-  const handleReservation = async () => {
+  const initializePayment = async () => {
     try {
-      const response = await axios.post('https://restaurant-server-5htc.onrender.com/api/reservations', {
-        restaurantId,
-        date,
-        timeSlot: time.toLocaleTimeString(),
-        guests: Number(guests),
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      // Calculate total amount based on number of guests (e.g., $10 per person)
+      const amount = Number(guests) * 1000; // Amount in cents
+      
+      // Get payment intent from your backend
+      const response = await axios.post(
+        'https://restaurant-server-2-7mo0.onrender.com/api/payments/create-payment-intent',
+        {
+          amount,
+          currency: 'usd',
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const { paymentIntent, ephemeralKey, customer } = response.data;
+
+      const { error } = await initPaymentSheet({
+        merchantDisplayName: restaurant.name,
+        customerId: customer,
+        customerEphemeralKeySecret: ephemeralKey,
+        paymentIntentClientSecret: paymentIntent,
+        defaultBillingDetails: {
+          name: 'Guest',
         },
       });
-      Alert.alert('Reservation Successful', response.data.message);
+
+      if (error) {
+        Alert.alert('Error', error.message);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      Alert.alert('Error', 'Unable to initialize payment');
+      return false;
+    }
+  };
+
+  const handlePayment = async () => {
+    setProcessingPayment(true);
+    
+    try {
+      const initialized = await initializePayment();
+      if (!initialized) {
+        setProcessingPayment(false);
+        return;
+      }
+
+      const { error } = await presentPaymentSheet();
+
+      if (error) {
+        Alert.alert('Error', error.message);
+        setProcessingPayment(false);
+        return;
+      }
+
+      // If payment successful, proceed with reservation
+      await handleReservation();
+      Alert.alert('Success', 'Payment successful and reservation confirmed!');
     } catch (err) {
-      Alert.alert('Reservation Failed', err.response?.data?.message || 'Failed to make a reservation');
+      Alert.alert('Error', 'Payment failed');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const handleReservation = async () => {
+    try {
+      const response = await axios.post(
+        'https://restaurant-server-2-7mo0.onrender.com/api/reservations',
+        {
+          restaurantId,
+          date,
+          timeSlot: time.toLocaleTimeString(),
+          numberOfGuests: Number(guests),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (err) {
+      throw new Error(err.response?.data?.message || 'Failed to make reservation');
     }
   };
 
@@ -95,6 +171,7 @@ const RestaurantDetailScreen = () => {
           mode="date"
           display="default"
           onChange={onDateChange}
+          minimumDate={new Date()}
         />
       )}
       <Button title="Select Time" onPress={showTimepicker} />
@@ -116,7 +193,15 @@ const RestaurantDetailScreen = () => {
       />
       
       <View style={styles.buttonContainer}>
-        <Button title="Book a Reservation" onPress={handleReservation} />
+        {processingPayment ? (
+          <ActivityIndicator size="large" color="#0000ff" />
+        ) : (
+          <Button 
+            title="Book and Pay Now" 
+            onPress={handlePayment}
+            disabled={!guests || Number(guests) <= 0}
+          />
+        )}
         <Button 
           title="Contact Restaurant" 
           onPress={() => {

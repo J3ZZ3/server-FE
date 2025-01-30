@@ -47,19 +47,20 @@ export default function LoginScreen() {
       <TextInput
         style={styles.input}
         placeholder="Password"
-        secureTextEntry
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {loading ? (
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
-        <>
-          <Button title="Login" onPress={handleLogin} />
-          <Button title="Login as Admin" onPress={() => router.replace('/AdminLogin')} />
-        </>
+        <Button title="Login" onPress={handleLogin} />
       )}
+      <View style={styles.registerLink}>
+        <Text>Don't have an account? </Text>
+        <Button title="Register" onPress={() => router.replace('/register')} />
+      </View>
     </View>
   );
 }
@@ -89,5 +90,11 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  registerLink: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 12,
   },
 });
