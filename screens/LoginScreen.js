@@ -18,7 +18,7 @@ const LoginScreen = ({ navigation }) => {
     setError('');
 
     try {
-      const response = await axios.post('https://restaurant-server-5htc.onrender.com/api/auth/login', {
+      const response = await axios.post('https://final-zhwm.onrender.com/api/auth/login', {
         email,
         password,
       });

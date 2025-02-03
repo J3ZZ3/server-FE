@@ -13,10 +13,11 @@ const UserReservations = () => {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await axios.get(`https://restaurant-server-2-7mo0.onrender.com/api/user/reservations`, {
+        const response = await axios.get(`https://final-zhwm.onrender.com/api/user/reservations`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+
         });
         
         console.log('Fetched Reservations:', response.data); // Log the response data

@@ -20,13 +20,14 @@ const RestaurantDetailScreen = () => {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await axios.get(`https://restaurant-server-2-7mo0.onrender.com/api/restaurants/${restaurantId}`);
+        const response = await axios.get(`http://localhost:5000/api/restaurants/${restaurantId}`);
         setRestaurant(response.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch restaurant details');
       } finally {
         setLoading(false);
       }
+
     };
 
     fetchRestaurantDetails();
@@ -34,7 +35,17 @@ const RestaurantDetailScreen = () => {
 
   const handleReservation = async () => {
     try {
-      const response = await axios.post('https://restaurant-server-5htc.onrender.com/api/reservations', {
+      // Step 1: Create a payment with PayFast
+      const paymentResponse = await axios.post('http://localhost:5000/api/payments/payfast', {
+        reservationId: null, // Initially set to null, will be updated after reservation creation
+        amount: calculateTotalAmount(), // Calculate the total amount
+      });
+
+      // Redirect user to PayFast for payment
+      Linking.openURL(paymentResponse.data.paymentUrl); // Assuming paymentUrl is returned from PayFast
+
+      // Step 2: Proceed with reservation if payment is successful
+      const response = await axios.post('http://localhost:5000/api/reservations', {
         restaurantId,
         date,
         timeSlot: time.toLocaleTimeString(),
@@ -44,9 +55,51 @@ const RestaurantDetailScreen = () => {
           Authorization: `Bearer ${token}`,
         },
       });
+
       Alert.alert('Reservation Successful', response.data.message);
+
+      // Update payment status
+      await axios.put('http://localhost:5000/api/payments/update-status', {
+        paymentId: paymentResponse.data.paymentId, // Use the actual payment ID returned
+        status: 'completed'
+      });
+
     } catch (err) {
       Alert.alert('Reservation Failed', err.response?.data?.message || 'Failed to make a reservation');
+    }
+  };
+
+  const handlePayNow = async () => {
+    try {
+      // Step 1: Create a payment with PayFast
+      const paymentResponse = await axios.post('http://localhost:5000/api/payments/payfast', {
+        reservationId: null, // Initially set to null, will be updated after reservation creation
+        amount: calculateTotalAmount(), // Calculate the total amount
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Redirect user to PayFast for payment
+      Linking.openURL(paymentResponse.data.paymentUrl); // Assuming paymentUrl is returned from PayFast
+
+      // Step 2: Update payment status after successful payment
+      // You may want to implement a callback or webhook to confirm payment status
+      // For now, we will assume the payment is successful and update the status
+      await axios.put('http://localhost:5000/api/payments/update-status', {
+        paymentId: paymentResponse.data.paymentId, // Use the actual payment ID returned
+        status: 'completed'
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      Alert.alert('Payment Successful', 'Your payment has been processed successfully.');
+
+    } catch (err) {
+      Alert.alert('Payment Failed', err.response?.data?.message || 'Failed to process payment');
     }
   };
 
@@ -68,6 +121,12 @@ const RestaurantDetailScreen = () => {
     const currentTime = selectedTime || time;
     setShowTimePicker(false);
     setTime(currentTime);
+  };
+
+  const calculateTotalAmount = () => {
+    // Implement your logic to calculate the total amount based on the reservation details
+    const basePrice = 100; // Example base price per guest
+    return basePrice * Number(guests);
   };
 
   if (loading) {
@@ -128,6 +187,7 @@ const RestaurantDetailScreen = () => {
             }
           }} 
         />
+        <Button title="Pay Now" onPress={handlePayNow} />
       </View>
     </View>
   );

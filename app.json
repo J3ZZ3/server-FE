@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "YourAppName",
-    "slug": "your-app-slug",
+    "name": "Clienta",
+    "slug": "clienta",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "2cc319d6-e61b-4f95-ad91-f355efe11dfc"
+        "projectId": "02660bf8-c543-455d-a7bc-42408c3b716e"
       }
     }
   }

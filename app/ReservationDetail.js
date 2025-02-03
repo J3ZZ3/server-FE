@@ -12,7 +12,7 @@ const ReservationDetailScreen = () => {
   useEffect(() => {
     const fetchReservationDetails = async () => {
       try {
-        const response = await axios.get(`https://restaurant-server-2-7mo0.onrender.com/api/reservations/${reservationId}`, {
+        const response = await axios.get(`http://localhost:5000/api/reservations/${reservationId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

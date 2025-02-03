@@ -20,7 +20,7 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const response = await axios.post('https://restaurant-server-2-7mo0.onrender.com/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         email,
         password,
       });

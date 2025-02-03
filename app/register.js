@@ -27,7 +27,7 @@ export default function RegisterScreen() {
     setError('');
 
     try {
-      const response = await axios.post('https://restaurant-server-2-7mo0.onrender.com/api/auth/register', {
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
         email,
         password,
         name,
