@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, ActivityIndicator, Alert, TextInput, Linking } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const RestaurantDetailScreen = () => {
@@ -9,6 +9,7 @@ const RestaurantDetailScreen = () => {
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
   
   // New state variables for reservation details
   const [date, setDate] = useState(new Date());
@@ -27,7 +28,6 @@ const RestaurantDetailScreen = () => {
       } finally {
         setLoading(false);
       }
-
     };
 
     fetchRestaurantDetails();
@@ -35,17 +35,7 @@ const RestaurantDetailScreen = () => {
 
   const handleReservation = async () => {
     try {
-      // Step 1: Create a payment with PayFast
-      const paymentResponse = await axios.post('http://localhost:5000/api/payments/payfast', {
-        reservationId: null, // Initially set to null, will be updated after reservation creation
-        amount: calculateTotalAmount(), // Calculate the total amount
-      });
-
-      // Redirect user to PayFast for payment
-      Linking.openURL(paymentResponse.data.paymentUrl); // Assuming paymentUrl is returned from PayFast
-
-      // Step 2: Proceed with reservation if payment is successful
-      const response = await axios.post('http://localhost:5000/api/reservations', {
+      const reservationResponse = await axios.post('http://localhost:5000/api/reservations', {
         restaurantId,
         date,
         timeSlot: time.toLocaleTimeString(),
@@ -55,53 +45,13 @@ const RestaurantDetailScreen = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      Alert.alert('Reservation Successful', response.data.message);
-
-      // Update payment status
-      await axios.put('http://localhost:5000/api/payments/update-status', {
-        paymentId: paymentResponse.data.paymentId, // Use the actual payment ID returned
-        status: 'completed'
-      });
-
+      Alert.alert('Reservation Successful', reservationResponse.data.message);
     } catch (err) {
       Alert.alert('Reservation Failed', err.response?.data?.message || 'Failed to make a reservation');
     }
   };
 
-  const handlePayNow = async () => {
-    try {
-      // Step 1: Create a payment with PayFast
-      const paymentResponse = await axios.post('http://localhost:5000/api/payments/payfast', {
-        reservationId: null, // Initially set to null, will be updated after reservation creation
-        amount: calculateTotalAmount(), // Calculate the total amount
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Redirect user to PayFast for payment
-      Linking.openURL(paymentResponse.data.paymentUrl); // Assuming paymentUrl is returned from PayFast
-
-      // Step 2: Update payment status after successful payment
-      // You may want to implement a callback or webhook to confirm payment status
-      // For now, we will assume the payment is successful and update the status
-      await axios.put('http://localhost:5000/api/payments/update-status', {
-        paymentId: paymentResponse.data.paymentId, // Use the actual payment ID returned
-        status: 'completed'
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      Alert.alert('Payment Successful', 'Your payment has been processed successfully.');
-
-    } catch (err) {
-      Alert.alert('Payment Failed', err.response?.data?.message || 'Failed to process payment');
-    }
-  };
+  
 
   const showDatepicker = () => {
     setShowDatePicker(true);
@@ -123,11 +73,9 @@ const RestaurantDetailScreen = () => {
     setTime(currentTime);
   };
 
-  const calculateTotalAmount = () => {
-    // Implement your logic to calculate the total amount based on the reservation details
-    const basePrice = 100; // Example base price per guest
-    return basePrice * Number(guests);
-  };
+
+
+  
 
   if (loading) {
     return <ActivityIndicator size="large" color="#0000ff" />;
@@ -146,6 +94,7 @@ const RestaurantDetailScreen = () => {
       
       <Text style={styles.selectedText}>Selected Date: {date.toLocaleDateString()}</Text>
       <Text style={styles.selectedText}>Selected Time: {time.toLocaleTimeString()}</Text>
+      <Text style={styles.selectedText}>Number of Guests: {guests}</Text>
 
       <Button title="Select Date" onPress={showDatepicker} />
       {showDatePicker && (
@@ -187,8 +136,9 @@ const RestaurantDetailScreen = () => {
             }
           }} 
         />
-        <Button title="Pay Now" onPress={handlePayNow} />
       </View>
+
+      
     </View>
   );
 };

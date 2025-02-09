@@ -13,10 +13,12 @@ const UserReservations = () => {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await axios.get(`https://final-zhwm.onrender.com/api/user/reservations`, {
+        const response = await axios.get('http://localhost:5000/api/user/reservations', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+
+
 
         });
         

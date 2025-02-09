@@ -45,7 +45,13 @@ export default function Layout() {
           headerShown: true 
         }} 
       />
-      
+      <Stack.Screen 
+        name="BookingForm" 
+        options={{ 
+          title: "Book a Room",
+          headerShown: true 
+        }} 
+      />
     </Stack>
   );
 } 
