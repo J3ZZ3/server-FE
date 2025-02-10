@@ -21,7 +21,7 @@ const RestaurantDetailScreen = () => {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/restaurants/${restaurantId}`);
+        const response = await axios.get(`https://priority-i4dq.onrender.com/api/restaurants/${restaurantId}`);
         setRestaurant(response.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch restaurant details');
@@ -35,11 +35,12 @@ const RestaurantDetailScreen = () => {
 
   const handleReservation = async () => {
     try {
-      const reservationResponse = await axios.post('http://localhost:5000/api/reservations', {
+      const reservationResponse = await axios.post('https://priority-i4dq.onrender.com/api/reservations', {
         restaurantId,
         date,
         timeSlot: time.toLocaleTimeString(),
         guests: Number(guests),
+
       }, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -17,7 +17,7 @@ export default function RestaurantListScreen() {
     const fetchRestaurants = async () => {
       try {
         console.log('Fetching restaurants with token:', token);
-        const response = await axios.get('http://localhost:5000/api/restaurants', {
+        const response = await axios.get('https://priority-i4dq.onrender.com/api/restaurants', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
