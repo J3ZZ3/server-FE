@@ -25,15 +25,18 @@ export default function LoginScreen() {
         password,
       });
       
-      const { token, role } = response.data;
-      console.log('Login successful, token received:', token);
+      const { token, user } = response.data;
+      console.log('Login successful, token:', token);
       
-      // Navigate to Restaurants screen with token and role
+      // Set default authorization header for all future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Navigate to Restaurants screen with token and user data
       router.replace({
         pathname: '/restaurants',
         params: { 
-          token,
-          role
+          token: token,
+          userData: JSON.stringify(user)
         }
       });
     } catch (err) {
