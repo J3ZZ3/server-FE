@@ -17,7 +17,7 @@ const ReservationDetailScreen = () => {
   useEffect(() => {
     const fetchReservationDetails = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/reservations/${reservationId}`, {
+        const response = await axios.get(`https://priority-i4dq.onrender.com/api/reservations/${reservationId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -46,7 +46,7 @@ const ReservationDetailScreen = () => {
       // Calculate total amount based on $25 per guest
       const totalAmount = reservation.numberOfGuests * 25;
 
-      const response = await axios.post('http://localhost:5000/api/payments/create-payment', {
+      const response = await axios.post('https://priority-i4dq.onrender.com/api/payments/create-payment', {
         amount: totalAmount.toString(), // Convert to string for the request
         reservationId: reservationId,
       }, {

@@ -20,22 +20,25 @@ export default function LoginScreen() {
     setError('');
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('https://priority-i4dq.onrender.com/api/auth/login', {
         email,
         password,
       });
       
-      const { token } = response.data;
+      const { token, role } = response.data;
       console.log('Login successful, token received:', token);
       
-      // Navigate to Restaurants screen with the token
+      // Navigate to Restaurants screen with token and role
       router.replace({
         pathname: '/restaurants',
-        params: { token }
+        params: { 
+          token,
+          role
+        }
       });
     } catch (err) {
       console.error('Login error:', err.response?.data || err.message);
-      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

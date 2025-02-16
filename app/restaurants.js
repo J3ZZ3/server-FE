@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
-import { useLocalSearchParams, useNavigation } from 'expo-router';
+import { useLocalSearchParams, useNavigation, router } from 'expo-router';
 import { FAB } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function RestaurantListScreen() {
   const { token } = useLocalSearchParams();
@@ -17,7 +17,7 @@ export default function RestaurantListScreen() {
     const fetchRestaurants = async () => {
       try {
         console.log('Fetching restaurants with token:', token);
-        const response = await axios.get('http://localhost:5000/api/restaurants', {
+        const response = await axios.get('https://priority-i4dq.onrender.com/api/restaurants', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -37,6 +37,48 @@ export default function RestaurantListScreen() {
 
     
   }, [token, navigation]);
+
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          onPress: () => {
+            // Navigate to login screen
+            router.replace('/');
+          }
+        }
+      ]
+    );
+  };
+
+  const showMenu = () => {
+    Alert.alert(
+      "Menu",
+      "",
+      [
+        {
+          text: "My Reservations",
+          onPress: () => navigation.navigate('UserReservations', { token })
+        },
+        {
+          text: "Logout",
+          onPress: handleLogout,
+          style: "destructive"
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -80,7 +122,7 @@ export default function RestaurantListScreen() {
       />
       <FAB
         style={styles.fab}
-        icon="book"
+        icon={() => <Ionicons name="book-outline" size={24} color="white" />}
         onPress={() => navigation.navigate('UserReservations', { userId, token })}
       />
     </View>
