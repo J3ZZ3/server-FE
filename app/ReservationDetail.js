@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, Button } from 'react-
 import axios from 'axios';
 import { useLocalSearchParams } from 'expo-router';
 import { WebView } from 'react-native-webview';
-import CustomNumberPicker from './CustomNumberPicker';
+import CustomNumberPicker from './components/CustomNumberPicker';
 
 const ReservationDetailScreen = () => {
   const { reservationId, token } = useLocalSearchParams();

@@ -49,6 +49,15 @@ export default function RootLayout() {
           presentation: 'card'
         }} 
       />
+      <Stack.Screen 
+        name="support" 
+        options={{ 
+          headerTitle: 'Help & Support',
+          presentation: 'card',
+          headerStyle: styles.header,
+          headerTitleStyle: styles.headerTitle,
+        }} 
+      />
     </Stack>
   );
 }

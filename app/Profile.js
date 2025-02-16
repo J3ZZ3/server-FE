@@ -1,21 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  ScrollView, 
+  Alert,
+  TextInput,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  LayoutAnimation
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import axios from 'axios';
 
 export default function Profile() {
   const router = useRouter();
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState('');
+  const [editedEmail, setEditedEmail] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUserProfile();
+    }, [])
+  );
+
+  const handleTextInputFocus = (inputName) => {
+    console.log(`${inputName} input focused`);
+    setIsInputFocused(true);
+  };
+
+  const handleTextInputBlur = (inputName) => {
+    console.log(`${inputName} input blurred`);
+    setIsInputFocused(false);
+  };
 
   const fetchUserProfile = async () => {
     try {
-      // Check if Authorization header exists
       const authHeader = axios.defaults.headers.common['Authorization'];
       if (!authHeader) {
         console.error('No authorization header found');
@@ -26,7 +55,11 @@ export default function Profile() {
 
       const response = await axios.get('https://priority-i4dq.onrender.com/api/auth/me');
       console.log('Profile response:', response.data);
+      
+      // Update all user data fields
       setUserData(response.data);
+      setEditedName(response.data.name);
+      setEditedEmail(response.data.email);
     } catch (error) {
       console.error('Error fetching profile:', error.response?.data || error.message);
       if (error.response?.status === 401) {
@@ -38,6 +71,44 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleUpdateProfile = async () => {
+    // Validate inputs
+    if (!editedName.trim() || !editedEmail.trim()) {
+      Alert.alert('Error', 'Name and email are required');
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(editedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    try {
+      const response = await axios.put('https://priority-i4dq.onrender.com/api/auth/me', {
+        name: editedName.trim(),
+        email: editedEmail.trim()
+      });
+
+      // Only update the displayed data after successful save
+      setUserData(response.data);
+      setIsEditing(false);
+      Alert.alert('Success', 'Profile updated successfully');
+    } catch (error) {
+      console.error('Update error:', error);
+      Alert.alert('Error', error.response?.data?.error || 'Failed to update profile');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    // Reset form values to current user data
+    setEditedName(userData.name);
+    setEditedEmail(userData.email);
+    setIsEditing(false);
+    Keyboard.dismiss();
   };
 
   const handleLogout = () => {
@@ -62,6 +133,61 @@ export default function Profile() {
     );
   };
 
+  const EditProfileModal = () => (
+    <Modal
+      visible={isEditing}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={handleCancelEdit}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Edit Profile</Text>
+          
+          <Text style={styles.inputLabel}>Name</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your name"
+            value={editedName}
+            onChangeText={setEditedName}
+            returnKeyType="next"
+            onSubmitEditing={() => {
+              this.emailInput?.focus();
+            }}
+          />
+
+          <Text style={styles.inputLabel}>Email</Text>
+          <TextInput
+            ref={(input) => { this.emailInput = input; }}
+            style={styles.input}
+            placeholder="Enter your email"
+            value={editedEmail}
+            onChangeText={setEditedEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            returnKeyType="done"
+          />
+
+          <View style={styles.modalButtons}>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.cancelButton]} 
+              onPress={handleCancelEdit}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.saveButton]} 
+              onPress={handleUpdateProfile}
+            >
+              <Text style={styles.buttonText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
   if (loading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -72,37 +198,61 @@ export default function Profile() {
 
   return (
     <ScrollView style={styles.container}>
+      <EditProfileModal />
+      
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
           <Ionicons name="person-circle" size={80} color="#007AFF" />
         </View>
         <Text style={styles.userName}>{userData?.name || 'User'}</Text>
         <Text style={styles.userEmail}>{userData?.email || 'email@example.com'}</Text>
-        <Text style={styles.userRole}>Role: {userData?.role || 'user'}</Text>
+        <Text style={styles.userRole}>{userData?.role || 'user'}</Text>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <Text style={styles.sectionTitle}>Contact Information</Text>
+        <View style={styles.detailItem}>
+          <Ionicons name="call-outline" size={24} color="#007AFF" />
+          <Text style={styles.detailText}>
+            {userData?.phoneNumber || 'No phone number added'}
+          </Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Ionicons name="location-outline" size={24} color="#007AFF" />
+          <Text style={styles.detailText}>
+            {userData?.address || 'No address added'}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.detailsSection}>
+        <Text style={styles.sectionTitle}>Preferences</Text>
+        <View style={styles.detailItem}>
+          <Ionicons name="nutrition-outline" size={24} color="#007AFF" />
+          <Text style={styles.detailText}>
+            {userData?.preferences?.dietaryRestrictions?.join(', ') || 'No dietary restrictions'}
+          </Text>
+        </View>
+        <View style={styles.detailItem}>
+          <Ionicons name="restaurant-outline" size={24} color="#007AFF" />
+          <Text style={styles.detailText}>
+            {userData?.preferences?.favoritesCuisine?.join(', ') || 'No favorite cuisines'}
+          </Text>
+        </View>
       </View>
 
       <View style={styles.menuSection}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity 
+          style={styles.menuItem} 
+          onPress={() => router.push({
+            pathname: '/editProfile',
+            params: { 
+              userData: JSON.stringify(userData)
+            }
+          })}
+        >
           <Ionicons name="person-outline" size={24} color="#007AFF" />
           <Text style={styles.menuText}>Edit Profile</Text>
-          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="notifications-outline" size={24} color="#007AFF" />
-          <Text style={styles.menuText}>Notifications</Text>
-          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="settings-outline" size={24} color="#007AFF" />
-          <Text style={styles.menuText}>Settings</Text>
-          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.menuItem}>
-          <Ionicons name="help-circle-outline" size={24} color="#007AFF" />
-          <Text style={styles.menuText}>Help & Support</Text>
           <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
         </TouchableOpacity>
 
@@ -165,5 +315,81 @@ const styles = StyleSheet.create({
     color: '#000000',
     flex: 1,
     marginLeft: 12,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  input: {
+    height: 40,
+    borderColor: 'gray',
+    borderWidth: 1,
+    marginBottom: 15,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+  },
+  inputLabel: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#666',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 10,
+    borderRadius: 5,
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#FF3B30',
+  },
+  saveButton: {
+    backgroundColor: '#007AFF',
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  detailsSection: {
+    backgroundColor: '#FFFFFF',
+    marginTop: 20,
+    padding: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#000000',
+    marginBottom: 12,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  detailText: {
+    fontSize: 16,
+    color: '#666666',
+    marginLeft: 12,
+    flex: 1,
   },
 }); 

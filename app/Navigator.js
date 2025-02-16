@@ -24,15 +24,15 @@ export default function Navigator() {
       color: '#007AFF'
     },
     {
-      title: 'Settings',
-      icon: 'settings-outline',
-      onPress: () => console.log('Settings pressed'),
-      color: '#32ADE6'
+      title: 'Security',
+      icon: 'shield-checkmark-outline',
+      onPress: () => router.push('/security'),
+      color: '#5856D6'
     },
     {
       title: 'Help & Support',
       icon: 'help-circle-outline',
-      onPress: () => console.log('Help pressed'),
+      onPress: () => router.push('/support'),
       color: '#5856D6'
     },
     {
