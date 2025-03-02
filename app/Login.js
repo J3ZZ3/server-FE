@@ -1,136 +1,114 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Image, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, Keyboard, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Link } from 'expo-router';
 import CustomInput from './components/CustomInput';
 import { validateEmail, validatePassword } from './utils/validation';
 import { login } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomAlert from './components/CustomAlert';
+import { View, Text, StyleSheet, ActivityIndicator, Image, TouchableOpacity, KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, Keyboard, Alert } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Link } from 'expo-router';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const router = useRouter();
-  const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alertConfig, setAlertConfig] = useState({
-    title: '',
-    message: '',
-    type: 'success'
-  });
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        setKeyboardVisible(true);
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        setKeyboardVisible(false);
-      }
-    );
-
-    return () => {
-      keyboardDidHideListener.remove();
-      keyboardDidShowListener.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const checkLoginStatus = async () => {
-      const token = await AsyncStorage.getItem('userToken');
-      if (token) {
-        router.replace('/restaurants'); // Navigate to the main app screen
-      } else {
-        router.replace('/Login'); // Navigate to the login screen
-      }
-    };
-
-    checkLoginStatus();
-  }, []);
-
-  const showError = (message) => {
-    Alert.alert(
-      'Error',
-      message,
-      [{ text: 'OK', style: 'default' }],
-      { cancelable: true }
-    );
-  };
-
-  const handleLogin = async () => {
-    // Reset errors
-    setError('');
-    setEmailError('');
-    setPasswordError('');
-    
-    // Validate inputs
-    const emailValidationError = validateEmail(email);
-    const passwordValidationError = validatePassword(password);
-    
-    setEmailError(emailValidationError);
-    setPasswordError(passwordValidationError);
-
-    if (emailValidationError || passwordValidationError) {
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const credentials = {
-        email,
-        password,
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const router = useRouter();
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+    const [alertVisible, setAlertVisible] = useState(false);
+    const [alertConfig, setAlertConfig] = useState({
+      title: '',
+      message: '',
+      type: 'success'
+    });
+  
+    useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener(
+        'keyboardDidShow',
+        () => {
+          setKeyboardVisible(true);
+        }
+      );
+      const keyboardDidHideListener = Keyboard.addListener(
+        'keyboardDidHide',
+        () => {
+          setKeyboardVisible(false);
+        }
+      );
+  
+      return () => {
+        keyboardDidHideListener.remove();
+        keyboardDidShowListener.remove();
       };
-
-      const response = await login(credentials);
-      
-      // Store the token and user info
-      await AsyncStorage.setItem('userToken', response.token);
-      await AsyncStorage.setItem('userRole', response.role);
-      await AsyncStorage.setItem('userData', JSON.stringify(response.user));
-      console.log('Token:', response.token);
-      console.log('Role:', response.role);
-      console.log('User Data:', response.user);
-      
-      setAlertConfig({
-        title: 'Success!',
-        message: 'Login successful! Redirecting...',
-        type: 'success'
-      });
-      setAlertVisible(true);
-
-      // Navigate after a short delay
-      setTimeout(() => {
-        router.replace({
-          pathname: '/restaurants',
-          params: { token: response.token }
-        });
-      }, 1500);
-
-      console.log('Token:', response.token);
-
-    } catch (err) {
-      const errorMessage = err.error || 'Login failed. Please try again.';
-      setAlertConfig({
-        title: 'Error',
-        message: errorMessage,
-        type: 'error'
-      });
-      setAlertVisible(true);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, []);
+  
+    const handleLogin = async () => {
+        // Reset errors
+        setError('');
+        setEmailError('');
+        setPasswordError('');
+        
+        // Validate inputs
+        const emailValidationError = validateEmail(email);
+        const passwordValidationError = validatePassword(password);
+        
+        setEmailError(emailValidationError);
+        setPasswordError(passwordValidationError);
+    
+        if (emailValidationError || passwordValidationError) {
+          return;
+        }
+    
+        setLoading(true);
+        try {
+          const credentials = {
+            email,
+            password,
+          };
+    
+          const response = await login(credentials);
+          
+          // Store the token and user info
+          await AsyncStorage.setItem('userToken', response.token);
+          await AsyncStorage.setItem('userRole', response.role);
+          await AsyncStorage.setItem('userData', JSON.stringify(response.user));
+          console.log('Token:', response.token);
+          console.log('Role:', response.role);
+          console.log('User Data:', response.user);
+          
+          setAlertConfig({
+            title: 'Success!',
+            message: 'Login successful! Redirecting...',
+            type: 'success'
+          });
+          setAlertVisible(true);
+    
+          // Navigate after a short delay
+          setTimeout(() => {
+            router.replace({
+              pathname: '/restaurants',
+              params: { token: response.token }
+            });
+          }, 1500);
+    
+          console.log('Token:', response.token);
+    
+        } catch (err) {
+          const errorMessage = err.error || 'Login failed. Please try again.';
+          setAlertConfig({
+            title: 'Error',
+            message: errorMessage,
+            type: 'error'
+          });
+          setAlertVisible(true);
+        } finally {
+          setLoading(false);
+        }
+      };
 
   return (
     <LinearGradient

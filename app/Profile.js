@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import axios from 'axios';
+import { logout } from './services/api';
 
 export default function Profile() {
   const router = useRouter();
@@ -111,24 +112,19 @@ export default function Profile() {
     Keyboard.dismiss();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
       [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
+        { text: 'Cancel', style: 'cancel' },
         {
           text: 'Logout',
-          onPress: () => {
-            // Clear axios default headers
-            delete axios.defaults.headers.common['Authorization'];
-            // Navigate to login
+          onPress: async () => {
+            await logout();
             router.replace('/');
-          }
-        }
+          },
+        },
       ]
     );
   };

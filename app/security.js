@@ -74,7 +74,7 @@ export default function Security() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Security Settings</Text>
+      <Text style={styles.title}>Update Security Settings</Text>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Change Password</Text>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { Colors } from '../constants/colors';
 
 const CustomButton = ({ 
     title, 
@@ -35,34 +36,34 @@ const CustomButton = ({
 
 const styles = StyleSheet.create({
     button: {
+        backgroundColor: Colors.primary,
         padding: 15,
         borderRadius: 8,
-        backgroundColor: '#007AFF',
         alignItems: 'center',
         justifyContent: 'center',
     },
     secondaryButton: {
-        backgroundColor: 'transparent',
+        backgroundColor: Colors.card,
+        borderColor: Colors.primary,
         borderWidth: 1,
-        borderColor: '#007AFF',
     },
     dangerButton: {
-        backgroundColor: '#FF3B30',
+        backgroundColor: Colors.danger,
     },
     disabledButton: {
-        backgroundColor: '#cccccc',
-        borderColor: '#cccccc',
+        backgroundColor: Colors.disabled,
+        borderColor: Colors.disabled,
     },
     text: {
-        color: '#FFFFFF',
+        color: Colors.text.light,
         fontSize: 16,
         fontWeight: '600',
     },
     secondaryText: {
-        color: '#007AFF',
+        color: Colors.primary,
     },
     disabledText: {
-        color: '#666666',
+        color: Colors.text.tertiary,
     },
 });
 
