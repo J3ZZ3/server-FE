@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Link } from 'expo-router';
 import CustomInput from './components/CustomInput';
 import { validateEmail, validatePassword } from './utils/validation';
-import { login } from './services/api';
+import { login, setAuthHeader } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CustomAlert from './components/CustomAlert';
 
@@ -93,7 +93,8 @@ export default function LoginScreen() {
       };
 
       const response = await login(credentials);
-      
+      await setAuthHeader(); // Set the authorization header after login
+
       // Store the token and user info
       await AsyncStorage.setItem('userToken', response.token);
       await AsyncStorage.setItem('userRole', response.role);
@@ -111,10 +112,7 @@ export default function LoginScreen() {
 
       // Navigate after a short delay
       setTimeout(() => {
-        router.replace({
-          pathname: '/restaurants',
-          params: { token: response.token }
-        });
+        router.replace('/RestaurantList');
       }, 1500);
 
       console.log('Token:', response.token);

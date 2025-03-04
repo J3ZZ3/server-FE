@@ -17,7 +17,7 @@
     "@expo/vector-icons": "^14.0.2",
     "@paypal/checkout-server-sdk": "^1.0.3",
     "@react-native-async-storage/async-storage": "^1.24.0",
-    "@react-native-community/datetimepicker": "^8.0.1",
+    "@react-native-community/datetimepicker": "7.6.1",
     "@react-native-picker/picker": "2.7.5",
     "@react-navigation/drawer": "^6.6.14",
     "@react-navigation/native": "^6.0.2",
@@ -25,8 +25,10 @@
     "@stripe/stripe-react-native": "^0.41.0",
     "axios": "^1.8.1",
     "expo": "~51.0.28",
+    "expo-av": "~14.0.7",
     "expo-blur": "~13.0.3",
     "expo-font": "~12.0.9",
+    "expo-image-picker": "~15.1.0",
     "expo-linear-gradient": "~13.0.2",
     "expo-linking": "~6.3.1",
     "expo-router": "~3.5.23",
@@ -49,8 +51,7 @@
     "react-native-webview": "13.8.6",
     "react-redux": "^9.2.0",
     "rn-expo-paypal-integration": "^1.2.0",
-    "stripe": "^17.6.0",
-    "expo-image-picker": "~15.1.0"
+    "stripe": "^17.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

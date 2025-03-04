@@ -90,7 +90,7 @@ export default function LoginScreen() {
           // Navigate after a short delay
           setTimeout(() => {
             router.replace({
-              pathname: '/restaurants',
+              pathname: '/RestaurantList',
               params: { token: response.token }
             });
           }, 1500);

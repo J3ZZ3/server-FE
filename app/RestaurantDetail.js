@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image, ImageBackground } from 'react-native';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
-import { LinearGradient } from 'expo-linear-gradient';
-import RestaurantCard from './components/RestaurantCard';
+
+// Background image URL
+const backgroundImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/rice-9083821_1280.jpg';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -57,30 +58,36 @@ const RestaurantDetailScreen = () => {
   }
 
   if (!restaurant) {
-    return <Text>Restaurant not found</Text>;
+    return <Text style={styles.errorText}>Restaurant not found</Text>;
   }
 
   return (
-    <LinearGradient
-      colors={['#FF6B00', '#FF8C00']}
+    <ImageBackground 
+      source={{ uri: backgroundImage }} 
       style={styles.container}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+      resizeMode="cover"
     >
       <ScrollView style={styles.scrollView}>
         <Image
-          source={{ uri: restaurant?.imageUrl || 'https://via.placeholder.com/400' }}
+          source={{ uri: restaurant?.imageUrl || 'https://cdn.pixabay.com/photo/2016/08/25/03/05/japans-1618638_1280.jpg' }}
           style={styles.headerImage}
         />
         
         <View style={styles.contentContainer}>
-          <RestaurantCard 
-            restaurant={restaurant} 
-            onReservePress={handleReservePress} 
-          />
+          <Text style={styles.title}>{restaurant.name}</Text>
+          <Text style={styles.subtitle}>{restaurant.cuisine}</Text>
+          <Text style={styles.location}>{restaurant.location}</Text>
+          <Text style={styles.contact}>{restaurant.contact}</Text>
+          <Text style={styles.description}>{restaurant.description}</Text>
+          
+          <View style={styles.reserveButton}>
+            <Text style={styles.reserveButtonText} onPress={handleReservePress}>
+              Reserve a Table
+            </Text>
+          </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </ImageBackground>
   );
 };
 
@@ -98,7 +105,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: '#3d3d3d',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     marginTop: -30,
@@ -112,75 +119,40 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  restaurantInfo: {
-    marginBottom: 24,
-  },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: Colors.text.primary,
+    color: '#332e31',
     marginBottom: 16,
   },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
   subtitle: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginLeft: 8,
+    fontSize: 20,
+    color: '#cc866f',
+    marginBottom: 8,
   },
   location: {
     fontSize: 16,
-    color: Colors.text.secondary,
-    marginLeft: 8,
+    color: '#666666',
+    marginBottom: 8,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  ratingText: {
-    marginLeft: 4,
+  contact: {
     fontSize: 16,
-    color: Colors.warning,
-    fontWeight: '600',
-  },
-  descriptionContainer: {
-    marginTop: 24,
-  },
-  descriptionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
+    color: '#666666',
     marginBottom: 8,
   },
   description: {
     fontSize: 16,
-    color: Colors.text.secondary,
+    color: '#999999',
     lineHeight: 24,
+    marginTop: 16,
   },
   reserveButton: {
     height: 55,
     marginTop: 24,
-    marginBottom: 32,
     borderRadius: 20,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  gradientButton: {
-    flex: 1,
+    backgroundColor: '#cc866f',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 25,
   },
   reserveButtonText: {
     color: '#FFFFFF',
@@ -198,20 +170,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginHorizontal: 20,
-  },
-  menuContainer: {
-    marginTop: 24,
-  },
-  menuTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  menuItem: {
-    fontSize: 16,
-    color: Colors.text.secondary,
-    marginBottom: 4,
   },
 });
 

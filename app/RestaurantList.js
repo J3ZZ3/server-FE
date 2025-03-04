@@ -16,6 +16,7 @@ import { useNavigation } from 'expo-router';
 import Navigator from './Navigator'; // Import the Navigator component
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
+import { fetchRestaurants } from './services/api';
 
 // URL for the background image
 const backgroundImage = 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'; // Replace with your image URL
@@ -40,11 +41,11 @@ const RestaurantList = () => {
   }, []);
 
   useEffect(() => {
-    const fetchRestaurants = async () => {
+    const fetchRestaurantData = async () => {
       try {
-        const response = await axios.get('https://priority-i4dq.onrender.com/api/restaurants');
-        setRestaurants(response.data);
-        setFilteredRestaurants(response.data);
+        const data = await fetchRestaurants();
+        setRestaurants(data);
+        setFilteredRestaurants(data);
       } catch (err) {
         console.error('Error fetching restaurants:', err);
         setError('Failed to load restaurants');
@@ -53,7 +54,7 @@ const RestaurantList = () => {
       }
     };
 
-    fetchRestaurants();
+    fetchRestaurantData();
   }, []);
 
   useEffect(() => {
@@ -70,12 +71,10 @@ const RestaurantList = () => {
   }, [searchQuery, restaurants]);
 
   const renderRestaurantItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.restaurantCard} 
+    <RestaurantCard 
+      restaurant={item} 
       onPress={() => navigation.navigate('RestaurantDetail', { restaurantId: item._id })}
-    >
-      <RestaurantCard restaurant={item} />
-    </TouchableOpacity>
+    />
   );
 
   if (loading) {

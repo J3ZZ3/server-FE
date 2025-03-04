@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -16,8 +16,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
-import axios from 'axios';
-import { logout } from './services/api';
+import { logout, fetchUserProfile } from './services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Profile() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function Profile() {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchUserProfile();
+      fetchUserProfileData();
     }, [])
   );
 
@@ -44,31 +44,17 @@ export default function Profile() {
     setIsInputFocused(false);
   };
 
-  const fetchUserProfile = async () => {
+  const fetchUserProfileData = async () => {
     try {
-      const authHeader = axios.defaults.headers.common['Authorization'];
-      if (!authHeader) {
-        console.error('No authorization header found');
-        Alert.alert('Error', 'Please login again');
-        router.replace('/');
-        return;
-      }
-
-      const response = await axios.get('https://priority-i4dq.onrender.com/api/auth/me');
-      console.log('Profile response:', response.data);
-      
-      // Update all user data fields
-      setUserData(response.data);
-      setEditedName(response.data.name);
-      setEditedEmail(response.data.email);
+      const data = await fetchUserProfile();
+      console.log('Profile response:', data);
+      setUserData(data);
+      setEditedName(data.name);
+      setEditedEmail(data.email);
     } catch (error) {
-      console.error('Error fetching profile:', error.response?.data || error.message);
-      if (error.response?.status === 401) {
-        Alert.alert('Session Expired', 'Please login again');
-        router.replace('/');
-      } else {
-        Alert.alert('Error', 'Failed to load profile data');
-      }
+      console.error('Error fetching profile:', error);
+      Alert.alert('Error', 'Failed to load profile data');
+      router.replace('/');
     } finally {
       setLoading(false);
     }

@@ -28,7 +28,7 @@ export default function RootLayout() {
       <Stack.Screen name="Login" options={{ headerShown: false }} />
       <Stack.Screen name="Register" options={{ headerTitle: 'Register', headerShown: false }} />
       <Stack.Screen 
-        name="Restaurants" 
+        name="RestaurantList" 
         options={{ 
           headerShown: false,
           headerStyle: { paddingTop: 20 }
