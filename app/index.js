@@ -50,7 +50,7 @@ export default function LoginScreen() {
     const checkLoginStatus = async () => {
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
-        router.replace('/restaurants'); // Navigate to the main app screen
+        router.replace('/RestaurantList'); // Navigate to the main app screen
       } else {
         router.replace('/Login'); // Navigate to the login screen
       }

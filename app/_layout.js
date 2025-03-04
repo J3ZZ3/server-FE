@@ -61,10 +61,6 @@ export default function RootLayout() {
           headerTitleStyle: styles.headerTitle,
         }} 
       />
-      <Stack.Screen 
-        name="AddRestaurant" 
-        options={{ headerTitle: 'Add Restaurant' }} 
-      />
     </Stack>
   );
 }

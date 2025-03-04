@@ -1,19 +1,26 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 
-const RestaurantCard = ({ restaurant, onReservePress }) => {
+// Use a URL for the placeholder image
+const placeholderImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/japan-contest-9083822_960_720.jpg'; // Example placeholder URL
+
+const RestaurantCard = ({ restaurant }) => {
   return (
     <View style={styles.card}>
-      <View style={styles.restaurantSection}>
-        <Text style={styles.restaurantName}>{restaurant.name}</Text>
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{restaurant.status}</Text>
-        </View>
-      </View>
-
+      <Image 
+        source={{ uri: restaurant.imageUrl || placeholderImage }} 
+        style={styles.image} 
+      />
       <View style={styles.detailsContainer}>
+        <View style={styles.restaurantSection}>
+          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{restaurant.status}</Text>
+          </View>
+        </View>
+
         <View style={styles.infoRow}>
           <Ionicons name="calendar-outline" size={20} color={Colors.text.secondary} />
           <Text style={styles.detailText}>{new Date(restaurant.date).toLocaleDateString()}</Text>
@@ -29,30 +36,37 @@ const RestaurantCard = ({ restaurant, onReservePress }) => {
           <Text style={styles.detailText}>{restaurant.numberOfGuests} {restaurant.numberOfGuests === 1 ? 'Guest' : 'Guests'}</Text>
         </View>
       </View>
-
-      <TouchableOpacity style={styles.reserveButton} onPress={onReservePress}>
-        <Text style={styles.reserveButtonText}>Make a Reservation</Text>
-      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    marginBottom: 16,
-    padding: 16,
-    shadowColor: Colors.text.primary,
+    backgroundColor: Colors.accent,
+    borderRadius: 12,
+    elevation: 3,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: 150,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    resizeMode: 'cover',
+  },
+  detailsContainer: {
+    padding: 16,
   },
   restaurantSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
   },
   restaurantName: {
     fontSize: 20,
@@ -70,30 +84,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  detailsContainer: {
-    marginTop: 12,
-  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
   detailText: {
-    fontSize: 16,
+    fontSize: 14,
     color: Colors.text.secondary,
     marginLeft: 12,
-  },
-  reserveButton: {
-    marginTop: 12,
-    backgroundColor: Colors.primary,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  reserveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 
