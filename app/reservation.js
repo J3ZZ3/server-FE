@@ -24,7 +24,8 @@ export default function ReservationScreen() {
       const response = await createReservation({
         ...reservationDetails,
         restaurantId,
-        timeSlot: reservationDetails.time // Ensure timeSlot is set correctly
+        restaurantName,
+        timeSlot: reservationDetails.time
       });
 
       console.log('Reservation response:', response);
@@ -36,6 +37,7 @@ export default function ReservationScreen() {
           amount: reservationDetails.guests * 25,
           token: token,
           restaurantId: restaurantId,
+          restaurantName: restaurantName,
           guests: reservationDetails.guests,
           date: reservationDetails.date,
           time: reservationDetails.time

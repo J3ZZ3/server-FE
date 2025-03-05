@@ -8,7 +8,7 @@ import { Colors } from './constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 
 const backgroundImage = 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
-const defaultRestaurantImage = 'https://via.placeholder.com/200x200.png?text=No+Image+Available';
+const defaultRestaurantImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/restaurant-9083831_1280.jpg';
 
 const ReservationDetailScreen = () => {
   const { reservationId, token } = useLocalSearchParams();
@@ -19,6 +19,7 @@ const ReservationDetailScreen = () => {
   const [error, setError] = useState(null);
   const [showPayPal, setShowPayPal] = useState(false);
   const [paypalUrl, setPaypalUrl] = useState('');
+  const [isCapturing, setIsCapturing] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -45,55 +46,152 @@ const ReservationDetailScreen = () => {
 
   const handlePayment = async () => {
     try {
+      console.log('Initiating payment for reservation:', reservationId);
       const response = await api.post('/payments/create-order', {
-        amount: reservation.numberOfGuests * 25,
+        amount: reservation.guests * 25,
         reservationId: reservationId,
+        currency: 'USD',
+        description: `Reservation at ${reservation.restaurantName || reservation.restaurantId?.name || 'Restaurant'}`
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPaypalUrl(response.data.approvalUrl);
-      setShowPayPal(true);
+
+      console.log('Payment creation response:', response.data);
+      
+      if (response.data && response.data.approvalUrl) {
+        setPaypalUrl(response.data.approvalUrl);
+        setShowPayPal(true);
+      } else {
+        throw new Error('No approval URL received from server');
+      }
     } catch (error) {
-      console.error('Payment initialization error:', error);
-      Alert.alert('Error', 'Failed to initialize payment. Please try again.');
+      console.error('Payment initialization error:', error.response?.data || error.message);
+      Alert.alert(
+        'Payment Error',
+        error.response?.data?.message || 'Failed to initialize payment. Please try again.'
+      );
     }
   };
 
   const handlePayPalNavigationStateChange = async (state) => {
-    if (state.url.includes('/payment/success')) {
-        // Extract order ID and PayerID from URL
+    try {
+      if (state.url.includes('/payment/success') && !isCapturing) {
+        setIsCapturing(true);
         const urlParams = new URLSearchParams(state.url.split('?')[1]);
         const orderId = urlParams.get('token');
-        const payerId = urlParams.get('PayerID'); // PayPal returns PayerID
+        const payerId = urlParams.get('PayerID');
+
+        console.log('Payment success:', { orderId, payerId });
 
         if (!orderId || !payerId) {
-            console.error('Missing order ID or payer ID in success URL');
-            Alert.alert('Error', 'Payment verification failed');
-            setShowPayPal(false);
-            return;
+          throw new Error('Missing payment details');
         }
 
         try {
-            // Capture the payment
-            await api.post('/payments/capture-order', {
-                orderId,
-                payerId, // Send payerId to backend
-                reservationId,
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+          const captureResponse = await api.post('/payments/capture-order', {
+            orderId,
+            payerId,
+            reservationId: reservationId
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
 
-            setShowPayPal(false);
-            Alert.alert('Success', 'Payment completed successfully!');
-            router.replace('/restaurants');
+          console.log('Payment capture response:', captureResponse.data);
+
+          setShowPayPal(false);
+          setReservation(prev => ({ ...prev, paymentStatus: 'completed' }));
+          Alert.alert('Success', 'Payment completed successfully!');
         } catch (error) {
-            console.error('Payment capture error:', error.response?.data || error);
-            Alert.alert('Error', error.response?.data?.error || 'Failed to complete payment');
+          if (error.response?.data?.message?.includes('ORDER_ALREADY_CAPTURED')) {
             setShowPayPal(false);
+            setReservation(prev => ({ ...prev, paymentStatus: 'completed' }));
+            Alert.alert('Success', 'Payment completed successfully!');
+          } else {
+            throw error;
+          }
         }
-    } else if (state.url.includes('/payment/cancel')) {
+      } else if (state.url.includes('/payment/cancel')) {
         setShowPayPal(false);
-        Alert.alert('Cancelled', 'Payment was cancelled');
+        setIsCapturing(false);
+        Alert.alert('Payment Cancelled', 'You have cancelled the payment process.');
+      }
+    } catch (error) {
+      console.error('Payment processing error:', error.response?.data || error.message);
+      setShowPayPal(false);
+      setIsCapturing(false);
+      Alert.alert(
+        'Payment Error',
+        'Failed to process payment. Please try again.'
+      );
+    }
+  };
+
+  const handleCancelReservation = () => {
+    Alert.alert(
+      'Cancel Reservation',
+      'Are you sure you want to cancel this reservation?',
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Yes',
+          style: 'destructive',
+          onPress: confirmCancelReservation,
+        },
+      ],
+    );
+  };
+
+  const confirmCancelReservation = async () => {
+    try {
+      const response = await api.delete(`/reservations/${reservationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (reservation.paymentStatus === 'completed') {
+        // Send refund request email
+        await api.post('/reservations/request-refund', {
+          reservationId,
+          email: reservation.email,
+          amount: reservation.guests * 25,
+          restaurantName: reservation.restaurantId?.name,
+          date: reservation.date,
+          timeSlot: reservation.timeSlot
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        Alert.alert(
+          'Reservation Cancelled',
+          'Your reservation has been cancelled. A refund request has been sent to our team and you will receive an email with further instructions.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      } else {
+        Alert.alert(
+          'Reservation Cancelled',
+          'Your reservation has been cancelled successfully.',
+          [{ text: 'OK', onPress: () => router.back() }]
+        );
+      }
+    } catch (error) {
+      console.error('Cancel reservation error:', error);
+      Alert.alert(
+        'Error',
+        'Failed to cancel reservation. Please try again.'
+      );
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'cancelled':
+        return Colors.danger;
+      case 'confirmed':
+        return Colors.success;
+      default:
+        return Colors.primary;
     }
   };
 
@@ -152,10 +250,20 @@ const ReservationDetailScreen = () => {
             <Text style={styles.headerTitle}>Reservation Details</Text>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, reservation.status === 'cancelled' && styles.cancelledCard]}>
+            {reservation.status === 'cancelled' && (
+              <View style={styles.cancelledBanner}>
+                <Ionicons name="close-circle" size={24} color="#fff" />
+                <Text style={styles.cancelledText}>Reservation Cancelled</Text>
+              </View>
+            )}
+
             <ImageBackground 
               source={{ uri: reservation.restaurantId?.image || defaultRestaurantImage }} 
-              style={styles.restaurantImage}
+              style={[
+                styles.restaurantImage,
+                reservation.status === 'cancelled' && styles.cancelledImage
+              ]}
               defaultSource={{ uri: defaultRestaurantImage }}
             >
               <View style={styles.overlay}>
@@ -165,8 +273,11 @@ const ReservationDetailScreen = () => {
                       {reservation.restaurantId?.name || 'Restaurant'}
                     </Text>
                     <View style={[styles.statusBadge, 
-                      { backgroundColor: reservation.status === 'confirmed' ? Colors.success : Colors.primary }]}>
-                      <Text style={styles.statusText}>{reservation.status}</Text>
+                      { backgroundColor: getStatusColor(reservation.status) }]}>
+                      <Text style={styles.statusText}>
+                        {reservation.status?.charAt(0).toUpperCase() + 
+                         reservation.status?.slice(1)}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -287,13 +398,18 @@ const ReservationDetailScreen = () => {
                   <Text style={styles.amount}>
                     Total Amount: ${reservation.guests * 25}
                   </Text>
-                  <Text style={styles.paymentStatus}>
-                    Status: {reservation.paymentStatus?.charAt(0).toUpperCase() + 
+                  <Text style={[
+                    styles.paymentStatus,
+                    reservation.status === 'cancelled' && styles.cancelledText
+                  ]}>
+                    Status: {reservation.status === 'cancelled' ? 'Refund Requested' : 
+                            reservation.paymentStatus?.charAt(0).toUpperCase() + 
                             reservation.paymentStatus?.slice(1)}
                   </Text>
                 </View>
 
-                {reservation.paymentStatus !== 'completed' && (
+                {reservation.status !== 'cancelled' && 
+                 reservation.paymentStatus !== 'completed' && (
                   <CustomButton
                     title="Pay Now"
                     onPress={handlePayment}
@@ -307,6 +423,17 @@ const ReservationDetailScreen = () => {
                   </View>
                 )}
               </View>
+
+              {reservation.status !== 'cancelled' && (
+                <View style={styles.cancelSection}>
+                  <CustomButton
+                    title="Cancel Reservation"
+                    onPress={handleCancelReservation}
+                    style={styles.cancelButton}
+                    textStyle={styles.cancelButtonText}
+                  />
+                </View>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -482,6 +609,39 @@ const styles = StyleSheet.create({
   paymentCompleteText: {
     marginLeft: 8,
     color: Colors.success,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelSection: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  cancelButton: {
+    backgroundColor: Colors.danger + '20',
+    borderWidth: 1,
+    borderColor: Colors.danger,
+  },
+  cancelButtonText: {
+    color: Colors.danger,
+    fontWeight: '600',
+  },
+  cancelledCard: {
+    opacity: 0.9,
+  },
+  cancelledImage: {
+    opacity: 0.7,
+  },
+  cancelledBanner: {
+    backgroundColor: Colors.danger,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  cancelledText: {
+    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },

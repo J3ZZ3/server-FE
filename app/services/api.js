@@ -72,30 +72,34 @@ export const createReservation = async (reservationData) => {
 };
 
 // Add these payment-related functions
-export const createPayPalOrder = async (amount, reservationId) => {
+export const createPayPalOrder = async (paymentData) => {
   try {
-    const response = await api.post('/payments/create-order', {
-      amount,
-      reservationId
-    });
+    const response = await api.post('/payments/create-order', paymentData);
     return response.data;
   } catch (error) {
-    console.error('Create PayPal order error:', error);
-    throw error.response?.data || error;
+    console.error('Create PayPal order error:', error.response?.data || error);
+    throw error;
   }
 };
 
-export const capturePayPalOrder = async (orderId, payerId, reservationId) => {
+export const capturePayPalOrder = async (paymentData) => {
   try {
-    const response = await api.post('/payments/capture-order', {
-      orderId,
-      payerId,
-      reservationId
-    });
+    const response = await api.post('/payments/capture-order', paymentData);
     return response.data;
   } catch (error) {
-    console.error('Capture PayPal payment error:', error);
-    throw error.response?.data || error;
+    console.error('Capture PayPal payment error:', error.response?.data || error);
+    throw error;
+  }
+};
+
+// Add this with other API functions
+export const requestRefund = async (refundData) => {
+  try {
+    const response = await api.post('/reservations/request-refund', refundData);
+    return response.data;
+  } catch (error) {
+    console.error('Refund request error:', error.response?.data || error);
+    throw error;
   }
 };
 

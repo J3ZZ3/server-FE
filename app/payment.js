@@ -6,7 +6,7 @@ import { Colors } from './constants/colors';
 import api from './services/api';
 
 export default function PaymentScreen() {
-  const { reservationId, amount, token } = useLocalSearchParams();
+  const { reservationId, amount, token, restaurantName } = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
   const [paypalUrl, setPaypalUrl] = useState(null);
   const router = useRouter();
@@ -16,7 +16,8 @@ export default function PaymentScreen() {
       setLoading(true);
       const response = await api.post('/payments/create-order', {
         amount,
-        reservationId
+        reservationId,
+        description: `Reservation at ${restaurantName}`
       });
       setPaypalUrl(response.data.approvalUrl);
     } catch (error) {
