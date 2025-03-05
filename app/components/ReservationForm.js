@@ -15,31 +15,32 @@ import CustomNumberPicker from './CustomNumberPicker';
 import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchUserProfile } from '../services/api';
 
 const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
   const [formData, setFormData] = useState({
     date: new Date(),
-    time: new Date(),
+    time: '',
     guests: 1,
     name: '',
     email: '',
     phone: '',
-    occasion: '',
+    occasion: 'Regular Dining',
     specialRequests: '',
-    seatingPreference: 'indoor', 
+    seatingPreference: 'indoor',
     dietaryRestrictions: '',
-    tablePreference: '', 
+    tablePreference: 'No Preference',
   });
   
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showTimeModal, setShowTimeModal] = useState(false);
   const [isDateValid, setIsDateValid] = useState(false);
   const [isTimeValid, setIsTimeValid] = useState(false);
-  const [selectedTime, setSelectedTime] = useState(null);
-  const [availableSlots, setAvailableSlots] = useState([]);
+  const [availableTimeSlots, setAvailableTimeSlots] = useState([]);
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [userProfile, setUserProfile] = useState(null);
 
   const occasions = [
     'Regular Dining',
@@ -57,6 +58,38 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
     'No Preference'
   ];
 
+  const tablePreferences = [
+    'Window Seat',
+    'Booth',
+    'Bar',
+    'Private Room',
+    'Outdoor',
+    'Near Kitchen',
+    'Quiet Area',
+    'No Preference'
+  ];
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      try {
+        const profile = await fetchUserProfile();
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            name: profile.name || '',
+            email: profile.email || '',
+            phone: profile.phoneNumber || ''
+          }));
+        }
+      } catch (error) {
+        console.error('Error loading user profile:', error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    loadUserProfile();
+  }, []);
+
   useEffect(() => {
     const selectedDate = new Date(formData.date);
     const today = new Date();
@@ -64,195 +97,190 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
     setIsDateValid(selectedDate >= today);
   }, [formData.date]);
 
-  useEffect(() => {
-    const selectedTime = new Date(formData.time);
-    const openingTime = new Date();
-    openingTime.setHours(11, 0, 0); // 11 AM
-    const closingTime = new Date();
-    closingTime.setHours(22, 0, 0); // 10 PM
-    setIsTimeValid(selectedTime >= openingTime && selectedTime <= closingTime);
-  }, [formData.time]);
-
-  useEffect(() => {
-    fetchAvailableSlots();
-  }, [formData.date]);
-
-  const fetchAvailableSlots = async () => {
+  const fetchAvailableTimeSlots = async (date) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = await AsyncStorage.getItem('userToken');
-      const formattedDate = formData.date.toISOString().split('T')[0];
-      
       const response = await axios.get(
-        `https://priority-i4dq.onrender.com/api/reservations/available-slots/${restaurantId}/${formattedDate}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+        `https://priority-i4dq.onrender.com/api/reservations/available-slots/${restaurantId}/${date.toISOString().split('T')[0]}`
       );
-
-      if (response.data && response.data.availableSlots) {
-        setAvailableSlots(response.data.availableSlots);
-      } else {
-        // Generate default time slots if none returned
-        const defaultSlots = generateDefaultTimeSlots();
-        setAvailableSlots(defaultSlots);
-      }
+      setAvailableTimeSlots(response.data.availableSlots || []);
     } catch (error) {
-      console.error('Error fetching available slots:', error);
-      // Fallback to default time slots on error
-      const defaultSlots = generateDefaultTimeSlots();
-      setAvailableSlots(defaultSlots);
+      console.error('Error fetching time slots:', error);
+      Alert.alert('Error', 'Could not fetch available time slots');
+      setAvailableTimeSlots([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateDefaultTimeSlots = () => {
-    const slots = [];
-    for (let hour = 11; hour <= 21; hour++) {
-      slots.push(`${hour}:00`);
-      slots.push(`${hour}:30`);
-    }
-    return slots;
-  };
-
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
   const handleDateChange = (event, selectedDate) => {
     setShowDatePicker(false);
     if (selectedDate) {
-      handleInputChange('date', selectedDate);
-      setSelectedTime(null); // Reset time when date changes
+      setFormData(prev => ({ ...prev, date: selectedDate }));
+      fetchAvailableTimeSlots(selectedDate);
     }
   };
 
-  const handleTimeSelect = (time) => {
-    setSelectedTime(time);
-    setShowTimePicker(false);
-  };
-
-  const validateForm = () => {
-    if (!formData.name.trim()) {
-      Alert.alert('Required Field', 'Please enter your name');
-      return false;
-    }
-    if (!formData.email.trim()) {
-      Alert.alert('Required Field', 'Please enter your email');
-      return false;
-    }
-    if (!formData.phone.trim()) {
-      Alert.alert('Required Field', 'Please enter your phone number');
-      return false;
-    }
-    if (!isDateValid) {
-      Alert.alert('Invalid Date', 'Please select a future date');
-      return false;
-    }
-    if (!isTimeValid) {
-      Alert.alert('Invalid Time', 'Restaurant is open from 11 AM to 10 PM');
-      return false;
-    }
-    return true;
+  const handleTimeSlotSelect = (timeSlot) => {
+    setSelectedTimeSlot(timeSlot);
+    setFormData(prev => ({ ...prev, time: timeSlot.time }));
+    setIsTimeValid(true);
+    setShowTimeModal(false);
   };
 
   const handleSubmit = () => {
-    if (validateForm()) {
-      setShowConfirmModal(true);
+    if (!isDateValid || !isTimeValid) {
+      Alert.alert('Invalid Date/Time', 'Please select a valid date and time');
+      return;
     }
+
+    if (!formData.name || !formData.email || !formData.phone) {
+      Alert.alert('Missing Information', 'Please fill in all required fields');
+      return;
+    }
+
+    onSubmit(formData);
   };
 
-  const handleConfirm = () => {
-    onSubmit(formData);
-    setShowConfirmModal(false);
-  };
+  if (loadingProfile) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ffffff" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.formSection}>
-        <Text style={styles.sectionTitle}>Contact Information</Text>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Full Name *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.name}
-            onChangeText={(value) => handleInputChange('name', value)}
-            placeholder="Enter your full name"
-            placeholderTextColor={Colors.text.tertiary}
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Date</Text>
+        <TouchableOpacity 
+          style={styles.input} 
+          onPress={() => setShowDatePicker(true)}
+        >
+          <Text style={styles.inputText}>
+            {formData.date.toLocaleDateString()}
+          </Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={formData.date}
+            mode="date"
+            onChange={handleDateChange}
+            minimumDate={new Date()}
           />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Email *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
-            placeholder="Enter your email"
-            placeholderTextColor={Colors.text.tertiary}
-            keyboardType="email-address"
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Phone Number *</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.phone}
-            onChangeText={(value) => handleInputChange('phone', value)}
-            placeholder="Enter your phone number"
-            placeholderTextColor={Colors.text.tertiary}
-            keyboardType="phone-pad"
-          />
-        </View>
+        )}
       </View>
 
-      <View style={styles.formSection}>
-        <Text style={styles.sectionTitle}>Reservation Details</Text>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Date *</Text>
-          <TouchableOpacity 
-            style={[styles.dateButton, !isDateValid && styles.invalidInput]} 
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Ionicons name="calendar-outline" size={20} color={Colors.text.dark} />
-            <Text style={styles.dateButtonText}>
-              {formData.date.toLocaleDateString()}
-            </Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Time</Text>
+        <TouchableOpacity 
+          style={styles.input} 
+          onPress={() => setShowTimeModal(true)}
+        >
+          <Text style={styles.inputText}>
+            {formData.time || 'Select Time'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Time *</Text>
-          <TouchableOpacity 
-            style={[styles.dateButton, !isTimeValid && styles.invalidInput]} 
-            onPress={() => setShowTimePicker(true)}
-          >
-            <Ionicons name="time-outline" size={20} color={Colors.text.dark} />
-            <Text style={styles.dateButtonText}>
-              {selectedTime || 'Select Time'}
-            </Text>
-          </TouchableOpacity>
+      <Modal
+        visible={showTimeModal}
+        transparent={true}
+        animationType="fade"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Time</Text>
+            {loading ? (
+              <ActivityIndicator size="large" color={Colors.primary} />
+            ) : availableTimeSlots.length > 0 ? (
+              <ScrollView style={styles.timeSlotsContainer}>
+                <View style={styles.timeSlotsList}>
+                  {availableTimeSlots.map((slot, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.timeSlot,
+                        !slot.available && styles.unavailableSlot,
+                        selectedTimeSlot === slot && styles.selectedTimeSlot
+                      ]}
+                      onPress={() => slot.available && handleTimeSlotSelect(slot)}
+                      disabled={!slot.available}
+                    >
+                      <Text style={[
+                        styles.timeSlotText,
+                        !slot.available && styles.unavailableText,
+                        selectedTimeSlot === slot && styles.selectedTimeText
+                      ]}>
+                        {slot.time}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+            ) : (
+              <Text style={styles.noSlotsText}>No available time slots</Text>
+            )}
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setShowTimeModal(false)}
+            >
+              <Text style={styles.buttonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </Modal>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Number of Guests *</Text>
-          <CustomNumberPicker 
-            value={formData.guests} 
-            onChange={(value) => handleInputChange('guests', value)}
-            min={1}
-            max={20}
-          />
-        </View>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Number of Guests</Text>
+        <CustomNumberPicker
+          value={formData.guests}
+          onChange={(value) => setFormData(prev => ({ ...prev, guests: value }))}
+          min={1}
+          max={20}
+        />
+      </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Occasion</Text>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Name</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.name}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
+          placeholder="Your Name"
+          placeholderTextColor="#666"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Email</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.email}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, email: text }))}
+          placeholder="Your Email"
+          placeholderTextColor="#666"
+          keyboardType="email-address"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Phone</Text>
+        <TextInput
+          style={styles.input}
+          value={formData.phone}
+          onChangeText={(text) => setFormData(prev => ({ ...prev, phone: text }))}
+          placeholder="Your Phone Number"
+          placeholderTextColor="#666"
+          keyboardType="phone-pad"
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Occasion</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.occasionContainer}>
             {occasions.map((occasion) => (
               <TouchableOpacity
@@ -261,7 +289,7 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
                   styles.occasionButton,
                   formData.occasion === occasion && styles.selectedOccasion
                 ]}
-                onPress={() => handleInputChange('occasion', occasion)}
+                onPress={() => setFormData(prev => ({ ...prev, occasion }))}
               >
                 <Text style={[
                   styles.occasionText,
@@ -272,261 +300,175 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </ScrollView>
+      </View>
 
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Seating Preference</Text>
-          <View style={styles.seatingContainer}>
-            {seatingOptions.map((option) => (
-              <TouchableOpacity
-                key={option}
-                style={[
-                  styles.seatingButton,
-                  formData.seatingPreference === option.toLowerCase() && styles.selectedSeating
-                ]}
-                onPress={() => handleInputChange('seatingPreference', option.toLowerCase())}
-              >
-                <Text style={[
-                  styles.seatingText,
-                  formData.seatingPreference === option.toLowerCase() && styles.selectedSeatingText
-                ]}>
-                  {option}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Table Preference</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.tablePreference}
-            onChangeText={(value) => handleInputChange('tablePreference', value)}
-            placeholder="e.g., Window seat, Booth, Bar"
-            placeholderTextColor={Colors.text.tertiary}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Dietary Restrictions</Text>
-          <TextInput
-            style={styles.input}
-            value={formData.dietaryRestrictions}
-            onChangeText={(value) => handleInputChange('dietaryRestrictions', value)}
-            placeholder="Any allergies or dietary requirements?"
-            placeholderTextColor={Colors.text.tertiary}
-          />
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Special Requests</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={formData.specialRequests}
-            onChangeText={(value) => handleInputChange('specialRequests', value)}
-            placeholder="Any special requests or celebrations?"
-            placeholderTextColor={Colors.text.tertiary}
-            multiline
-            numberOfLines={4}
-          />
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Seating Preference</Text>
+        <View style={styles.seatingContainer}>
+          {seatingOptions.map((option) => (
+            <TouchableOpacity
+              key={option}
+              style={[
+                styles.seatingButton,
+                formData.seatingPreference.toLowerCase() === option.toLowerCase() && 
+                styles.selectedSeating
+              ]}
+              onPress={() => setFormData(prev => ({ 
+                ...prev, 
+                seatingPreference: option.toLowerCase() 
+              }))}
+            >
+              <Text style={[
+                styles.seatingText,
+                formData.seatingPreference.toLowerCase() === option.toLowerCase() && 
+                styles.selectedSeatingText
+              ]}>
+                {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit}
-      >
-        <Text style={styles.submitButtonText}>Review Reservation</Text>
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={formData.date}
-          mode="date"
-          display="default"
-          onChange={handleDateChange}
-          minimumDate={new Date()}
-        />
-      )}
-
-      {showTimePicker && (
-        <Modal
-          visible={showTimePicker}
-          animationType="slide"
-          transparent={true}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Select Time</Text>
-              {loading ? (
-                <ActivityIndicator size="large" color={Colors.primary} />
-              ) : (
-                <ScrollView>
-                  {availableSlots.map((time) => (
-                    <TouchableOpacity
-                      key={time}
-                      style={[
-                        styles.timeSlot,
-                        selectedTime === time && styles.selectedTimeSlot
-                      ]}
-                      onPress={() => handleTimeSelect(time)}
-                    >
-                      <Text style={[
-                        styles.timeSlotText,
-                        selectedTime === time && styles.selectedTimeSlotText
-                      ]}>
-                        {time}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowTimePicker(false)}
-              >
-                <Text style={styles.closeButtonText}>Close</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-      )}
-
-      <Modal
-        visible={showConfirmModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowConfirmModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Confirm Reservation</Text>
-            <ScrollView>
-              <Text style={styles.modalText}>Restaurant: {restaurantName}</Text>
-              <Text style={styles.modalText}>Name: {formData.name}</Text>
-              <Text style={styles.modalText}>Date: {formData.date.toLocaleDateString()}</Text>
-              <Text style={styles.modalText}>Time: {selectedTime || 'Select Time'}</Text>
-              <Text style={styles.modalText}>Guests: {formData.guests}</Text>
-              <Text style={styles.modalText}>Phone: {formData.phone}</Text>
-              <Text style={styles.modalText}>Email: {formData.email}</Text>
-              {formData.occasion && (
-                <Text style={styles.modalText}>Occasion: {formData.occasion}</Text>
-              )}
-              {formData.seatingPreference && (
-                <Text style={styles.modalText}>Seating: {formData.seatingPreference}</Text>
-              )}
-              {formData.dietaryRestrictions && (
-                <Text style={styles.modalText}>Dietary Restrictions: {formData.dietaryRestrictions}</Text>
-              )}
-              {formData.specialRequests && (
-                <Text style={styles.modalText}>Special Requests: {formData.specialRequests}</Text>
-              )}
-            </ScrollView>
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setShowConfirmModal(false)}
-              >
-                <Text style={styles.buttonText}>Edit</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleConfirm}
-              >
-                <Text style={styles.buttonText}>Confirm</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Table Preference</Text>
+        <View style={styles.tablePreferenceContainer}>
+          {tablePreferences.map((preference) => (
+            <TouchableOpacity
+              key={preference}
+              style={[
+                styles.tablePreferenceButton,
+                formData.tablePreference === preference && 
+                styles.selectedTablePreference
+              ]}
+              onPress={() => setFormData(prev => ({ 
+                ...prev, 
+                tablePreference: preference 
+              }))}
+            >
+              <Text style={[
+                styles.tablePreferenceText,
+                formData.tablePreference === preference && 
+                styles.selectedTablePreferenceText
+              ]}>
+                {preference}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-      </Modal>
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Dietary Restrictions</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={formData.dietaryRestrictions}
+          onChangeText={(text) => setFormData(prev => ({ 
+            ...prev, 
+            dietaryRestrictions: text 
+          }))}
+          placeholder="Any dietary restrictions?"
+          placeholderTextColor="#666"
+          multiline
+        />
+      </View>
+
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Special Requests</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={formData.specialRequests}
+          onChangeText={(text) => setFormData(prev => ({ 
+            ...prev, 
+            specialRequests: text 
+          }))}
+          placeholder="Any special requests?"
+          placeholderTextColor="#666"
+          multiline
+        />
+      </View>
+
+      <TouchableOpacity 
+        style={[
+          styles.submitButton,
+          (!isDateValid || !isTimeValid) && styles.disabledButton
+        ]} 
+        onPress={handleSubmit}
+        disabled={!isDateValid || !isTimeValid}
+      >
+        <Text style={styles.submitButtonText}>Make Reservation</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: Colors.background,
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  formSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 16,
-  },
-  inputGroup: {
-    marginBottom: 16,
+  formGroup: {
+    marginBottom: 20,
   },
   label: {
+    color: '#ffffff',
     fontSize: 16,
-    color: Colors.text.secondary,
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   input: {
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 8,
     padding: 12,
-    fontSize: 16,
-    color: Colors.text.primary,
+    color: '#ffffff',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  inputText: {
+    color: '#ffffff',
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
   },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.background,
+  submitButton: {
+    backgroundColor: '#cc866f',
+    padding: 15,
     borderRadius: 8,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    alignItems: 'center',
+    marginTop: 20,
   },
-  dateButtonText: {
-    marginLeft: 8,
+  disabledButton: {
+    backgroundColor: '#666666',
+  },
+  submitButtonText: {
+    color: '#ffffff',
     fontSize: 16,
-    color: Colors.text.primary,
-  },
-  invalidInput: {
-    borderWidth: 1,
-    borderColor: Colors.danger,
+    fontWeight: 'bold',
   },
   occasionContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -4,
   },
   occasionButton: {
-    backgroundColor: Colors.background,
-    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 12,
     borderRadius: 20,
-    margin: 4,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   selectedOccasion: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#cc866f',
+    borderColor: '#cc866f',
   },
   occasionText: {
-    color: Colors.text.light,
-    fontSize: 14,
+    color: '#ffffff',
   },
   selectedOccasionText: {
-    color: Colors.text.light,
     fontWeight: 'bold',
   },
   seatingContainer: {
@@ -535,115 +477,136 @@ const styles = StyleSheet.create({
   },
   seatingButton: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 4,
+    borderRadius: 20,
+    marginHorizontal: 5,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   selectedSeating: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#cc866f',
+    borderColor: '#cc866f',
   },
   seatingText: {
-    color: Colors.text.light,
-    fontSize: 14,
+    color: '#ffffff',
   },
   selectedSeatingText: {
-    color: Colors.text.light,
-    fontWeight: 'bold',
-  },
-  submitButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 32,
-  },
-  submitButtonText: {
-    color: Colors.text.light,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: Colors.overlay,
-  },
-  modalContent: {
-    backgroundColor: Colors.card,
-    padding: 20,
-    borderRadius: 16,
-    width: '90%',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.text.dark,
-    marginBottom: 16,
-  },
-  modalText: {
-    fontSize: 16,
-    color: Colors.text.dark,
-    marginBottom: 8,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 8,
-    marginHorizontal: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: Colors.danger,
-  },
-  confirmButton: {
-    backgroundColor: Colors.primary,
-  },
-  buttonText: {
-    color: Colors.text.light,
-    fontSize: 16,
     fontWeight: 'bold',
   },
   modalContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '80%',
+    maxHeight: '70%',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  timeSlotsContainer: {
+    marginVertical: 10,
+  },
+  timeSlotsList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 5,
   },
   timeSlot: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-  },
-  selectedTimeSlot: {
-    backgroundColor: Colors.primary,
-  },
-  timeSlotText: {
-    fontSize: 16,
-    color: Colors.text.primary,
-  },
-  selectedTimeSlotText: {
-    color: Colors.text.light,
-  },
-  closeButton: {
-    marginTop: 16,
-    padding: 16,
-    backgroundColor: Colors.primary,
+    padding: 10,
+    margin: 5,
     borderRadius: 8,
+    backgroundColor: 'rgba(204, 134, 111, 0.2)',
+    minWidth: 100,
     alignItems: 'center',
   },
-  closeButtonText: {
-    color: Colors.text.light,
+  unavailableSlot: {
+    backgroundColor: 'rgba(128, 128, 128, 0.2)',
+  },
+  selectedTimeSlot: {
+    backgroundColor: '#cc866f',
+  },
+  timeSlotText: {
+    color: '#cc866f',
+    fontSize: 16,
+  },
+  selectedTimeText: {
+    color: '#ffffff',
+  },
+  unavailableText: {
+    color: '#666666',
+  },
+  modalButton: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#cc866f',
+  },
+  buttonText: {
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: 16,
+  },
+  loadingText: {
+    color: '#ffffff',
+    marginTop: 10,
+    fontSize: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
+  },
+  tablePreferenceContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  tablePreferenceButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    padding: 12,
+    borderRadius: 20,
+    margin: 4,
+    minWidth: '45%',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+  },
+  selectedTablePreference: {
+    backgroundColor: '#cc866f',
+    borderColor: '#cc866f',
+  },
+  tablePreferenceText: {
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  selectedTablePreferenceText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  noSlotsText: {
+    textAlign: 'center',
+    padding: 20,
+    color: '#666666',
+  }
 });
 
-export default ReservationForm; 
+export default ReservationForm;
