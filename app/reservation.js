@@ -1,48 +1,60 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, Text, ImageBackground } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, ImageBackground, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import ReservationForm from './components/ReservationForm';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createReservation } from './services/api';
 
 export default function ReservationScreen() {
-  const { restaurantId, restaurantName, token } = useLocalSearchParams();
+  const { restaurantId, restaurantName } = useLocalSearchParams();
   const router = useRouter();
 
   const handleReservation = async (reservationDetails) => {
     try {
-      const reservationResponse = await axios.post('https://priority-i4dq.onrender.com/api/reservations', {
+      const token = await AsyncStorage.getItem('userToken');
+      
+      if (!token) {
+        Alert.alert('Authentication Error', 'Please login again');
+        return;
+      }
+
+      console.log('Sending reservation details:', reservationDetails);
+
+      const response = await createReservation({
+        ...reservationDetails,
         restaurantId,
-        date: reservationDetails.date.toISOString(),
-        timeSlot: reservationDetails.time,
-        guests: reservationDetails.guests,
-        name: reservationDetails.name,
-        email: reservationDetails.email,
-        phone: reservationDetails.phone,
-        occasion: reservationDetails.occasion,
-        seatingPreference: reservationDetails.seatingPreference,
-        dietaryRestrictions: reservationDetails.dietaryRestrictions,
-        specialRequests: reservationDetails.specialRequests,
-        tablePreference: reservationDetails.tablePreference
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        timeSlot: reservationDetails.time // Ensure timeSlot is set correctly
       });
+
+      console.log('Reservation response:', response);
 
       router.push({
         pathname: '/reservationCost',
         params: {
-          reservationId: reservationResponse.data.reservation._id,
+          reservationId: response.reservation._id,
           amount: reservationDetails.guests * 25,
           token: token,
           restaurantId: restaurantId,
           guests: reservationDetails.guests,
-          date: reservationDetails.date.toISOString(),
+          date: reservationDetails.date,
           time: reservationDetails.time
         }
       });
     } catch (err) {
-      Alert.alert('Reservation Failed', err.response?.data?.message || 'Failed to make a reservation');
+      console.error('Reservation error:', err);
+      if (err.error === 'Invalid token') {
+        Alert.alert(
+          'Session Expired',
+          'Please login again to continue'
+        );
+        router.push('/login');
+        return;
+      }
+      Alert.alert(
+        'Reservation Failed',
+        err.message || 'Failed to make a reservation'
+      );
     }
   };
 

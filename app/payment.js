@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { Colors } from './constants/colors';
-import axios from 'axios';
+import api from './services/api';
 
 export default function PaymentScreen() {
   const { reservationId, amount, token } = useLocalSearchParams();
@@ -14,18 +14,10 @@ export default function PaymentScreen() {
   const initiatePayment = async () => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        'https://priority-i4dq.onrender.com/api/payments/create-order',
-        {
-          amount,
-          reservationId
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await api.post('/payments/create-order', {
+        amount,
+        reservationId
+      });
       setPaypalUrl(response.data.approvalUrl);
     } catch (error) {
       console.error('Payment initiation error:', error);
@@ -46,19 +38,11 @@ export default function PaymentScreen() {
       const PayerID = urlParams.get('PayerID');
 
       try {
-        await axios.post(
-          'https://priority-i4dq.onrender.com/api/payments/capture-order',
-          {
-            orderId: paypalOrderId,
-            payerId: PayerID,
-            reservationId
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        await api.post('/payments/capture-order', {
+          orderId: paypalOrderId,
+          payerId: PayerID,
+          reservationId
+        });
 
         Alert.alert(
           'Success',
@@ -125,6 +109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
+    
   },
   loadingContainer: {
     position: 'absolute',

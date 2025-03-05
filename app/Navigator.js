@@ -7,14 +7,14 @@ import { logout } from './services/api';
 
 const { height, width } = Dimensions.get('window');
 
-export default function Navigator({ isVisible, onClose, token }) {
+export default function Navigator({ isVisible, onClose }) {
   const menuItems = [
     {
       title: 'Profile',
       icon: 'person-outline',
       description: 'View and edit your profile',
       onPress: () => {
-        router.push({ pathname: '/Profile', params: { token } });
+        router.push('/Profile');
         onClose();
       },
       color: '#32ADE6'
@@ -24,7 +24,7 @@ export default function Navigator({ isVisible, onClose, token }) {
       icon: 'restaurant-outline',
       description: 'Explore restaurants near you',
       onPress: () => {
-        router.push({ pathname: '/restaurants', params: { token } });
+        router.push('/restaurants');
         onClose();
       },
       color: '#FF9500'
@@ -34,7 +34,7 @@ export default function Navigator({ isVisible, onClose, token }) {
       icon: 'book-outline',
       description: 'Manage your bookings',
       onPress: () => {
-        router.push({ pathname: '/UserReservations', params: { token } });
+        router.push('/UserReservations');
         onClose();
       },
       color: '#007AFF'
@@ -44,7 +44,7 @@ export default function Navigator({ isVisible, onClose, token }) {
       icon: 'book-outline',
       description: 'Manage your bookings',
       onPress: () => {
-        router.push({ pathname: '/AddRestaurantScreen', params: { token } });
+        router.push('/AddRestaurantScreen');
         onClose();
       },
       color: '#007AFF'
@@ -54,7 +54,7 @@ export default function Navigator({ isVisible, onClose, token }) {
       icon: 'shield-checkmark-outline',
       description: 'Manage your account security',
       onPress: () => {
-        router.push({ pathname: '/security', params: { token } });
+        router.push('/security');
         onClose();
       },
       color: '#5856D6'
@@ -64,7 +64,7 @@ export default function Navigator({ isVisible, onClose, token }) {
       icon: 'help-circle-outline',
       description: 'Get assistance and support',
       onPress: () => {
-        router.push({ pathname: '/support', params: { token } });
+        router.push('/support');
         onClose();
       },
       color: '#34C759'

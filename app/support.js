@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
+import api from './services/api';
 
 export default function Support() {
   const router = useRouter();
@@ -68,14 +68,12 @@ export default function Support() {
     }
 
     try {
-      await axios.post('https://priority-i4dq.onrender.com/api/feedback', {
+      await api.post('/feedback', {
         message: message.trim()
       });
-
       Alert.alert('Thank You!', 'Your feedback has been submitted successfully');
       setMessage('');
     } catch (error) {
-      console.error('Feedback error:', error);
       Alert.alert('Error', 'Failed to submit feedback. Please try again later.');
     }
   };

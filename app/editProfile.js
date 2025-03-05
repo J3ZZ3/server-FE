@@ -10,7 +10,7 @@ import {
   Platform
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import axios from 'axios';
+import api from './services/api';
 
 export default function EditProfile() {
   const router = useRouter();
@@ -29,42 +29,19 @@ export default function EditProfile() {
 
   const handleUpdateProfile = async () => {
     try {
-      // Validate required fields
-      if (!editedName.trim()) {
-        Alert.alert('Error', 'Name is required');
-        return;
-      }
-
-      const updatedProfile = {
-        name: editedName.trim(),
-        phoneNumber: phoneNumber.trim(),
-        address: address.trim(),
+      const response = await api.put('/user/profile', {
+        name: editedName,
+        phoneNumber,
+        address,
         preferences: {
-          dietaryRestrictions: dietaryRestrictions
-            .split(',')
-            .map(item => item.trim())
-            .filter(item => item.length > 0),
-          favoritesCuisine: favoritesCuisine
-            .split(',')
-            .map(item => item.trim())
-            .filter(item => item.length > 0)
+          dietaryRestrictions: dietaryRestrictions.split(',').map(item => item.trim()),
+          favoritesCuisine: favoritesCuisine.split(',').map(item => item.trim())
         }
-      };
-
-      const response = await axios.put(
-        'https://priority-i4dq.onrender.com/api/auth/me',
-        updatedProfile
-      );
-
-      Alert.alert('Success', 'Profile updated successfully', [
-        {
-          text: 'OK',
-          onPress: () => router.back()
-        }
-      ]);
+      });
+      Alert.alert('Success', 'Profile updated successfully');
+      router.back();
     } catch (error) {
-      console.error('Update error:', error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to update profile');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update profile');
     }
   };
 

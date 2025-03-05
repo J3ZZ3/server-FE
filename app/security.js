@@ -9,7 +9,7 @@ import {
   ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import axios from 'axios';
+import api from './services/api';
 
 export default function Security() {
   const router = useRouter();
@@ -36,18 +36,16 @@ export default function Security() {
     }
 
     try {
-      const response = await axios.put('https://priority-i4dq.onrender.com/api/auth/password', {
+      await api.put('/user/password', {
         currentPassword,
         newPassword
       });
-
       Alert.alert('Success', 'Password updated successfully');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error) {
-      console.error('Password update error:', error);
-      Alert.alert('Error', error.response?.data?.error || 'Failed to update password');
+      Alert.alert('Error', error.response?.data?.message || 'Failed to update password');
     }
   };
 
@@ -60,7 +58,7 @@ export default function Security() {
     }
 
     try {
-      const response = await axios.put('https://priority-i4dq.onrender.com/api/auth/email', {
+      const response = await api.put('/user/email', {
         newEmail: newEmail.trim()
       });
 

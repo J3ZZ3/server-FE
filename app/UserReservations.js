@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { Colors } from './constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+import api from './services/api';
 
 const UserReservations = () => {
   const { token } = useLocalSearchParams(); // Get token from params
@@ -15,13 +16,9 @@ const UserReservations = () => {
   useEffect(() => {
     const fetchReservations = async () => {
       try {
-        const response = await axios.get('https://priority-i4dq.onrender.com/api/user/reservations', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await api.get('/user/reservations', {
+          headers: { Authorization: `Bearer ${token}` }
         });
-        
-        console.log('Fetched Reservations:', response.data); // Log the response data
         setReservations(response.data);
         setError(null);
       } catch (err) {

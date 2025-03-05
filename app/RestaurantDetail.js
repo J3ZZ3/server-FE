@@ -6,6 +6,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
+import api from './services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -21,11 +23,10 @@ const RestaurantDetailScreen = () => {
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
       try {
-        const response = await axios.get(`https://priority-i4dq.onrender.com/api/restaurants/${restaurantId}`);
+        const response = await api.get(`/restaurants/${restaurantId}`);
         setRestaurant(response.data);
-      } catch (err) {
-        console.error('Error fetching restaurant:', err);
-        setError(err.response?.data?.message || 'Failed to fetch restaurant details');
+      } catch (error) {
+        setError('Failed to load restaurant details');
       } finally {
         setLoading(false);
       }
@@ -59,15 +60,38 @@ const RestaurantDetailScreen = () => {
     })();
   }, []);
 
-  const handleReservePress = () => {
-    router.push({
-      pathname: '/reservation',
-      params: {
-        restaurantId: restaurantId,
-        restaurantName: restaurant?.name,
-        token: token
+  const handleReservePress = async () => {
+    try {
+      // Check if token exists in AsyncStorage as fallback
+      const storedToken = await AsyncStorage.getItem('userToken');
+      const authToken = token || storedToken;
+
+      if (!authToken) {
+        Alert.alert(
+          'Authentication Required',
+          'Please log in to make a reservation',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/login')  // Redirect to login page
+            }
+          ]
+        );
+        return;
       }
-    });
+
+      router.push({
+        pathname: '/reservation',
+        params: {
+          restaurantId: restaurantId,
+          restaurantName: restaurant?.name,
+          token: authToken
+        }
+      });
+    } catch (error) {
+      console.error('Error in handleReservePress:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again.');
+    }
   };
 
   const handleCallPress = async () => {

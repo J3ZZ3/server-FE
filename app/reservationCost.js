@@ -1,20 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Alert, ImageBackground, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import axios from 'axios';
-import { CustomButton } from './components';
+import api from './services/api';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ReservationCostScreen() {
-  const { 
-    reservationId, 
-    amount, 
-    token, 
-    restaurantId,
-    guests,
-    date,
-    time
-  } = useLocalSearchParams();
-  
+  const { reservationId, amount, token, restaurantId, guests, date, time } = useLocalSearchParams();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -25,9 +17,7 @@ export default function ReservationCostScreen() {
 
   const fetchRestaurantDetails = async () => {
     try {
-      const response = await axios.get(
-        `https://priority-i4dq.onrender.com/api/restaurants/${restaurantId}`
-      );
+      const response = await api.get(`/restaurants/${restaurantId}`);
       setRestaurant(response.data);
     } catch (error) {
       Alert.alert('Error', 'Failed to fetch restaurant details');
@@ -39,18 +29,14 @@ export default function ReservationCostScreen() {
   const handlePayment = () => {
     router.push({
       pathname: '/payment',
-      params: {
-        reservationId,
-        amount,
-        token
-      }
+      params: { reservationId, amount, token }
     });
   };
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator size="large" color="#0000ff" />
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#cc866f" />
       </View>
     );
   }
@@ -63,171 +49,235 @@ export default function ReservationCostScreen() {
   });
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Reservation Summary</Text>
-        
-        <View style={styles.restaurantInfo}>
-          <Text style={styles.restaurantName}>{restaurant?.name}</Text>
-          <Text style={styles.cuisine}>{restaurant?.cuisine}</Text>
-          <Text style={styles.location}>{restaurant?.location}</Text>
+    <ImageBackground 
+      source={{ uri: 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1' }} 
+      style={styles.backgroundImage}
+    >
+      <ScrollView style={styles.container}>
+        <View style={styles.headerCard}>
+          <Text style={styles.headerTitle}>Reservation Summary</Text>
+          <Text style={styles.headerSubtitle}>{restaurant?.name}</Text>
         </View>
 
-        <View style={styles.divider} />
+        <View style={styles.mainCard}>
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="calendar-outline" size={24} color="#cc866f" />
+              <Text style={styles.sectionTitle}>Date & Time</Text>
+            </View>
+            <Text style={styles.sectionContent}>{formattedDate}</Text>
+            <Text style={styles.sectionContent}>{time}</Text>
+          </View>
 
-        <View style={styles.detailsContainer}>
-          <DetailRow label="Date" value={formattedDate} />
-          <DetailRow label="Time" value={time} />
-          <DetailRow label="Number of Guests" value={guests} />
-        </View>
+          <View style={styles.divider} />
 
-        <View style={styles.divider} />
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="people-outline" size={24} color="#cc866f" />
+              <Text style={styles.sectionTitle}>Party Details</Text>
+            </View>
+            <Text style={styles.sectionContent}>{guests} {parseInt(guests) === 1 ? 'Guest' : 'Guests'}</Text>
+          </View>
 
-        <View style={styles.costBreakdown}>
-          <Text style={styles.costTitle}>Cost Breakdown</Text>
-          <DetailRow 
-            label="Cost per Guest" 
-            value={`$25.00`} 
-          />
-          <DetailRow 
-            label="Number of Guests" 
-            value={guests} 
-          />
-          <View style={styles.totalContainer}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
-            <Text style={styles.totalAmount}>${amount}</Text>
+          <View style={styles.divider} />
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="restaurant-outline" size={24} color="#cc866f" />
+              <Text style={styles.sectionTitle}>Restaurant Details</Text>
+            </View>
+            <Text style={styles.sectionContent}>{restaurant?.cuisine}</Text>
+            <Text style={styles.sectionContent}>{restaurant?.location}</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="card-outline" size={24} color="#cc866f" />
+              <Text style={styles.sectionTitle}>Payment Details</Text>
+            </View>
+            <View style={styles.costRow}>
+              <Text style={styles.costLabel}>Reservation Fee per Guest</Text>
+              <Text style={styles.costValue}>$25.00</Text>
+            </View>
+            <View style={styles.costRow}>
+              <Text style={styles.costLabel}>Number of Guests</Text>
+              <Text style={styles.costValue}>{guests}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Total Amount</Text>
+              <Text style={styles.totalAmount}>${amount}</Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.divider} />
-
-        <View style={styles.infoContainer}>
+        <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>Important Information</Text>
-          <Text style={styles.infoText}>• Reservation will be confirmed after payment</Text>
-          <Text style={styles.infoText}>• Cancellation available up to 24 hours before</Text>
-          <Text style={styles.infoText}>• Please arrive 10 minutes before your reservation time</Text>
+          <View style={styles.infoItem}>
+            <Ionicons name="checkmark-circle-outline" size={20} color="#cc866f" />
+            <Text style={styles.infoText}>Reservation will be confirmed after payment</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Ionicons name="time-outline" size={20} color="#cc866f" />
+            <Text style={styles.infoText}>Cancellation available up to 24 hours before</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Ionicons name="alert-circle-outline" size={20} color="#cc866f" />
+            <Text style={styles.infoText}>Please arrive 10 minutes before your reservation time</Text>
+          </View>
         </View>
-      </View>
 
-      <CustomButton 
-        title="Proceed to Payment" 
-        onPress={handlePayment}
-        style={styles.payButton}
-      />
-    </ScrollView>
+        <TouchableOpacity onPress={handlePayment} style={styles.paymentButton}>
+          <LinearGradient
+            colors={['#cc866f', '#a66451']}
+            style={styles.gradient}
+          >
+            <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
+            <Ionicons name="arrow-forward" size={24} color="#fff" />
+          </LinearGradient>
+        </TouchableOpacity>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
-const DetailRow = ({ label, value }) => (
-  <View style={styles.detailRow}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={styles.detailValue}>{value}</Text>
-  </View>
-);
-
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
     padding: 16,
   },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  title: {
+  headerCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
+    color: '#cc866f',
+    marginBottom: 8,
   },
-  restaurantInfo: {
+  headerSubtitle: {
+    fontSize: 18,
+    color: '#666',
+  },
+  mainCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 16,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  restaurantName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 4,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#cc866f',
+    marginLeft: 8,
   },
-  cuisine: {
+  sectionContent: {
     fontSize: 16,
-    color: '#666',
+    color: '#444',
+    marginLeft: 32,
     marginBottom: 4,
-  },
-  location: {
-    fontSize: 16,
-    color: '#666',
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 20,
+    backgroundColor: 'rgba(204, 134, 111, 0.2)',
+    marginVertical: 16,
   },
-  detailsContainer: {
-    marginBottom: 20,
-  },
-  detailRow: {
+  costRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginLeft: 32,
+    marginBottom: 8,
   },
-  detailLabel: {
+  costLabel: {
     fontSize: 16,
     color: '#666',
   },
-  detailValue: {
+  costValue: {
     fontSize: 16,
+    color: '#444',
     fontWeight: '500',
   },
-  costBreakdown: {
-    marginBottom: 20,
-  },
-  costTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  totalContainer: {
+  totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    marginLeft: 32,
   },
   totalLabel: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#444',
   },
   totalAmount: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#2196F3',
+    color: '#cc866f',
   },
-  infoContainer: {
-    backgroundColor: '#f8f8f8',
-    padding: 16,
-    borderRadius: 8,
+  infoCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 16,
   },
   infoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#cc866f',
+    marginBottom: 16,
+  },
+  infoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
   infoText: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 8,
+    marginLeft: 8,
+    flex: 1,
   },
-  payButton: {
+  paymentButton: {
+    borderRadius: 12,
+    overflow: 'hidden',
     marginBottom: 30,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  gradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  paymentButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+    marginRight: 8,
   },
 }); 

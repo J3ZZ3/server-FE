@@ -16,6 +16,7 @@ import { Colors } from '../constants/colors';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 import { fetchUserProfile } from '../services/api';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
   const [formData, setFormData] = useState({
@@ -100,8 +101,20 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
   const fetchAvailableTimeSlots = async (date) => {
     setLoading(true);
     try {
+      const token = await AsyncStorage.getItem('userToken');
+      if (!token) {
+        Alert.alert('Authentication Error', 'Please login again');
+        return;
+      }
+
       const response = await axios.get(
-        `https://priority-i4dq.onrender.com/api/reservations/available-slots/${restaurantId}/${date.toISOString().split('T')[0]}`
+        `https://priority-i4dq.onrender.com/api/reservations/available-slots/${restaurantId}/${date.toISOString().split('T')[0]}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
       );
       setAvailableTimeSlots(response.data.availableSlots || []);
     } catch (error) {
@@ -123,23 +136,55 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
 
   const handleTimeSlotSelect = (timeSlot) => {
     setSelectedTimeSlot(timeSlot);
-    setFormData(prev => ({ ...prev, time: timeSlot.time }));
+    setFormData(prev => ({ 
+      ...prev, 
+      time: timeSlot.time,
+      timeSlot: timeSlot.time
+    }));
     setIsTimeValid(true);
     setShowTimeModal(false);
   };
 
-  const handleSubmit = () => {
-    if (!isDateValid || !isTimeValid) {
-      Alert.alert('Invalid Date/Time', 'Please select a valid date and time');
-      return;
-    }
+  const handleSubmit = async () => {
+    try {
+      if (!isDateValid || !isTimeValid) {
+        Alert.alert('Invalid Date/Time', 'Please select a valid date and time');
+        return;
+      }
 
-    if (!formData.name || !formData.email || !formData.phone) {
-      Alert.alert('Missing Information', 'Please fill in all required fields');
-      return;
-    }
+      if (!formData.name || !formData.email || !formData.phone) {
+        Alert.alert('Missing Information', 'Please fill in all required fields');
+        return;
+      }
 
-    onSubmit(formData);
+      setLoading(true);
+
+      const reservationData = {
+        restaurantId,
+        date: formData.date.toISOString(),
+        timeSlot: formData.time,
+        time: formData.time,
+        guests: parseInt(formData.guests),
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        occasion: formData.occasion,
+        specialRequests: formData.specialRequests || '',
+        seatingPreference: formData.seatingPreference.toLowerCase(),
+        dietaryRestrictions: formData.dietaryRestrictions || '',
+        tablePreference: formData.tablePreference || 'No Preference'
+      };
+
+      await onSubmit(reservationData);
+    } catch (error) {
+      console.error('Reservation submission error:', error);
+      Alert.alert(
+        'Reservation Failed',
+        error.message || 'Failed to make reservation. Please try again.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loadingProfile) {
@@ -392,12 +437,16 @@ const ReservationForm = ({ onSubmit, restaurantName, restaurantId }) => {
       <TouchableOpacity 
         style={[
           styles.submitButton,
-          (!isDateValid || !isTimeValid) && styles.disabledButton
+          (!isDateValid || !isTimeValid || loading) && styles.disabledButton
         ]} 
         onPress={handleSubmit}
-        disabled={!isDateValid || !isTimeValid}
+        disabled={!isDateValid || !isTimeValid || loading}
       >
-        <Text style={styles.submitButtonText}>Make Reservation</Text>
+        {loading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.submitButtonText}>Make Reservation</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, SafeAreaView } from 'react-native';
-import axios from 'axios';
+import api from './services/api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import CustomButton from './components/CustomButton';
@@ -21,10 +21,8 @@ const ReservationDetailScreen = () => {
   useEffect(() => {
     const fetchReservationDetails = async () => {
       try {
-        const response = await axios.get(`https://priority-i4dq.onrender.com/api/reservations/${reservationId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        const response = await api.get(`/reservations/${reservationId}`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
         setReservation({
           ...response.data,
@@ -41,24 +39,13 @@ const ReservationDetailScreen = () => {
   }, [reservationId, token]);
 
   const handlePayment = async () => {
-    const totalAmount = reservation.numberOfGuests * 25; // $25 per guest
-
     try {
-      // Create PayPal order through backend
-      const response = await axios.post(
-        'https://priority-i4dq.onrender.com/api/payments/create-order',
-        {
-          amount: totalAmount,
-          reservationId: reservationId,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      // Show PayPal WebView with the order URL
+      const response = await api.post('/payments/create-order', {
+        amount: reservation.numberOfGuests * 25,
+        reservationId: reservationId,
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPaypalUrl(response.data.approvalUrl);
       setShowPayPal(true);
     } catch (error) {
@@ -83,19 +70,13 @@ const ReservationDetailScreen = () => {
 
         try {
             // Capture the payment
-            await axios.post(
-                'https://priority-i4dq.onrender.com/api/payments/capture-order',
-                {
-                    orderId,
-                    payerId, // Send payerId to backend
-                    reservationId,
-                },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
+            await api.post('/payments/capture-order', {
+                orderId,
+                payerId, // Send payerId to backend
+                reservationId,
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
             setShowPayPal(false);
             Alert.alert('Success', 'Payment completed successfully!');
