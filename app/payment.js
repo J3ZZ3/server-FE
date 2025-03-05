@@ -33,30 +33,51 @@ export default function PaymentScreen() {
 
   const handleNavigationStateChange = async (state) => {
     if (state.url.includes('/payment/success')) {
-      const urlParams = new URLSearchParams(state.url.split('?')[1]);
-      const paypalOrderId = urlParams.get('token');
-      const PayerID = urlParams.get('PayerID');
-
       try {
-        await api.post('/payments/capture-order', {
+        const urlParams = new URLSearchParams(state.url.split('?')[1]);
+        const paypalOrderId = urlParams.get('token');
+        const PayerID = urlParams.get('PayerID');
+
+        if (!paypalOrderId || !PayerID) {
+          throw new Error('Missing PayPal response parameters');
+        }
+
+        setLoading(true);
+        
+        const response = await api.post('/payments/capture-order', {
           orderId: paypalOrderId,
           payerId: PayerID,
           reservationId
         });
 
+        if (response.data.status === 'success') {
+          Alert.alert(
+            'Success',
+            'Payment completed successfully!',
+            [
+              {
+                text: 'OK',
+                onPress: () => router.replace('/UserReservations')
+              }
+            ]
+          );
+        } else {
+          throw new Error('Payment capture failed');
+        }
+      } catch (error) {
+        console.error('Payment capture error:', error);
         Alert.alert(
-          'Success',
-          'Payment completed successfully!',
+          'Error',
+          'Payment was processed but confirmation failed. Please contact support.',
           [
             {
               text: 'OK',
-              onPress: () => router.replace('/reservations')
+              onPress: () => router.replace('/UserReservations')
             }
           ]
         );
-      } catch (error) {
-        console.error('Payment capture error:', error);
-        Alert.alert('Error', 'Failed to complete payment');
+      } finally {
+        setLoading(false);
       }
     } else if (state.url.includes('/payment/cancel')) {
       Alert.alert(

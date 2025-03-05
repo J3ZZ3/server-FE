@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, SafeAreaView, ImageBackground } from 'react-native';
 import api from './services/api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import CustomButton from './components/CustomButton';
 import { Colors } from './constants/colors';
 import { Ionicons } from '@expo/vector-icons';
+
+const backgroundImage = 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+const defaultRestaurantImage = 'https://via.placeholder.com/200x200.png?text=No+Image+Available';
 
 const ReservationDetailScreen = () => {
   const { reservationId, token } = useLocalSearchParams();
@@ -24,10 +27,12 @@ const ReservationDetailScreen = () => {
         const response = await api.get(`/reservations/${reservationId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setReservation({
-          ...response.data,
-          numberOfGuests: response.data.numberOfGuests || 1,
-        });
+        
+        // Ensure we have the complete reservation data
+        const reservationData = response.data;
+        setReservation(reservationData);
+        
+        console.log('Fetched reservation:', reservationData); // For debugging
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch reservation details');
       } finally {
@@ -140,64 +145,183 @@ const ReservationDetailScreen = () => {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Reservation Details</Text>
-        </View>
-
-        <View style={styles.card}>
-          <View style={styles.restaurantSection}>
-            <Text style={styles.restaurantName}>{reservation.restaurantId.name}</Text>
-            <View style={styles.statusBadge}>
-              <Text style={styles.statusText}>{reservation.status}</Text>
-            </View>
+    <ImageBackground source={{ uri: backgroundImage }} style={styles.backgroundImage}>
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.scrollView}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Reservation Details</Text>
           </View>
 
-          <View style={styles.detailsContainer}>
-            <View style={styles.infoRow}>
-              <Ionicons name="calendar-outline" size={20} color={Colors.text.secondary} />
-              <Text style={styles.detailText}>
-                {new Date(reservation.date).toLocaleDateString()}
-              </Text>
-            </View>
+          <View style={styles.card}>
+            <ImageBackground 
+              source={{ uri: reservation.restaurantId?.image || defaultRestaurantImage }} 
+              style={styles.restaurantImage}
+              defaultSource={{ uri: defaultRestaurantImage }}
+            >
+              <View style={styles.overlay}>
+                <View style={styles.contentContainer}>
+                  <View style={styles.restaurantSection}>
+                    <Text style={[styles.restaurantName, styles.lightText]}>
+                      {reservation.restaurantId?.name || 'Restaurant'}
+                    </Text>
+                    <View style={[styles.statusBadge, 
+                      { backgroundColor: reservation.status === 'confirmed' ? Colors.success : Colors.primary }]}>
+                      <Text style={styles.statusText}>{reservation.status}</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </ImageBackground>
 
-            <View style={styles.infoRow}>
-              <Ionicons name="time-outline" size={20} color={Colors.text.secondary} />
-              <Text style={styles.detailText}>
-                {new Date(reservation.timeSlot).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </Text>
-            </View>
+            <View style={styles.detailsSection}>
+              <View style={styles.sectionTitle}>
+                <Ionicons name="information-circle-outline" size={24} color={Colors.primary} />
+                <Text style={styles.sectionTitleText}>Reservation Information</Text>
+              </View>
 
-            <View style={styles.infoRow}>
-              <Ionicons name="people-outline" size={20} color={Colors.text.secondary} />
-              <Text style={styles.detailText}>
-                {reservation.numberOfGuests} {reservation.numberOfGuests === 1 ? 'Guest' : 'Guests'}
-              </Text>
-            </View>
+              <View style={styles.detailsGrid}>
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="calendar-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Date</Text>
+                  </View>
+                  <Text style={styles.valueText}>
+                    {new Date(reservation.date).toLocaleDateString('en-US', {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric'
+                    })}
+                  </Text>
+                </View>
 
-            <View style={styles.paymentSection}>
-              <Text style={styles.paymentTitle}>Payment Details</Text>
-              <Text style={styles.amount}>
-                Total Amount: ${reservation.numberOfGuests * 25}
-              </Text>
-              <CustomButton
-                title="Pay Now"
-                onPress={handlePayment}
-                style={styles.payButton}
-              />
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="time-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Time</Text>
+                  </View>
+                  <Text style={styles.valueText}>{reservation.timeSlot}</Text>
+                </View>
+
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="people-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Party Size</Text>
+                  </View>
+                  <Text style={styles.valueText}>
+                    {reservation.guests} {reservation.guests === 1 ? 'Guest' : 'Guests'}
+                  </Text>
+                </View>
+
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="person-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Reserved By</Text>
+                  </View>
+                  <Text style={styles.valueText}>{reservation.name}</Text>
+                </View>
+
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="call-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Contact</Text>
+                  </View>
+                  <Text style={styles.valueText}>{reservation.phone}</Text>
+                </View>
+
+                <View style={styles.detailBlock}>
+                  <View style={styles.infoRow}>
+                    <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+                    <Text style={styles.labelText}>Email</Text>
+                  </View>
+                  <Text style={styles.valueText}>{reservation.email}</Text>
+                </View>
+              </View>
+
+              {(reservation.occasion || reservation.seatingPreference || reservation.specialRequests) && (
+                <View style={styles.additionalDetails}>
+                  <View style={styles.sectionTitle}>
+                    <Ionicons name="list-outline" size={24} color={Colors.primary} />
+                    <Text style={styles.sectionTitleText}>Additional Details</Text>
+                  </View>
+
+                  {reservation.occasion && (
+                    <View style={styles.detailBlock}>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="gift-outline" size={20} color={Colors.primary} />
+                        <Text style={styles.labelText}>Occasion</Text>
+                      </View>
+                      <Text style={styles.valueText}>{reservation.occasion}</Text>
+                    </View>
+                  )}
+
+                  {reservation.seatingPreference && (
+                    <View style={styles.detailBlock}>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="restaurant-outline" size={20} color={Colors.primary} />
+                        <Text style={styles.labelText}>Seating Preference</Text>
+                      </View>
+                      <Text style={styles.valueText}>{reservation.seatingPreference}</Text>
+                    </View>
+                  )}
+
+                  {reservation.specialRequests && (
+                    <View style={styles.detailBlock}>
+                      <View style={styles.infoRow}>
+                        <Ionicons name="document-text-outline" size={20} color={Colors.primary} />
+                        <Text style={styles.labelText}>Special Requests</Text>
+                      </View>
+                      <Text style={styles.valueText}>{reservation.specialRequests}</Text>
+                    </View>
+                  )}
+                </View>
+              )}
+
+              <View style={styles.paymentSection}>
+                <View style={styles.sectionTitle}>
+                  <Ionicons name="card-outline" size={24} color={Colors.primary} />
+                  <Text style={styles.sectionTitleText}>Payment Details</Text>
+                </View>
+                
+                <View style={styles.paymentDetails}>
+                  <Text style={styles.amount}>
+                    Total Amount: ${reservation.guests * 25}
+                  </Text>
+                  <Text style={styles.paymentStatus}>
+                    Status: {reservation.paymentStatus?.charAt(0).toUpperCase() + 
+                            reservation.paymentStatus?.slice(1)}
+                  </Text>
+                </View>
+
+                {reservation.paymentStatus !== 'completed' && (
+                  <CustomButton
+                    title="Pay Now"
+                    onPress={handlePayment}
+                    style={styles.payButton}
+                  />
+                )}
+                {reservation.paymentStatus === 'completed' && (
+                  <View style={styles.paymentComplete}>
+                    <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+                    <Text style={styles.paymentCompleteText}>Payment Completed</Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
   },
   scrollView: {
     flex: 1,
@@ -205,13 +329,12 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: Colors.background,
-    marginTop: 44,
+    paddingTop: 40,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.text.light,
+    color: Colors.primary,
     marginBottom: 16,
   },
   card: {
@@ -223,74 +346,110 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  restaurantImage: {
+    width: '100%',
+    height: 200,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  contentContainer: {
+    padding: 16,
   },
   restaurantSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    marginBottom: 16,
   },
   restaurantName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: Colors.text.primary,
     flex: 1,
   },
-  detailsContainer: {
-    padding: 16,
+  detailsSection: {
+    padding: 20,
+    backgroundColor: Colors.card,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  sectionTitleText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.text.primary,
+    marginLeft: 8,
+  },
+  detailsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  detailBlock: {
+    width: '48%',
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  detailText: {
-    fontSize: 16,
+  labelText: {
+    fontSize: 14,
     color: Colors.text.secondary,
-    marginLeft: 12,
+    marginLeft: 8,
   },
-  guestsSection: {
-    marginVertical: 16,
+  valueText: {
+    fontSize: 16,
+    color: Colors.text.primary,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  additionalDetails: {
+    marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
   paymentSection: {
-    marginTop: 20,
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
+    padding: 20,
+    backgroundColor: Colors.card,
   },
-  paymentTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.text.primary,
-    marginBottom: 12,
+  paymentDetails: {
+    marginBottom: 16,
   },
   amount: {
     fontSize: 16,
     color: Colors.text.secondary,
     marginBottom: 16,
   },
-  payButton: {
-    marginTop: 12,
+  paymentStatus: {
+    fontSize: 16,
+    color: Colors.text.secondary,
+    marginTop: 8,
   },
   statusBadge: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   statusText: {
-    color: Colors.text.light,
+    color: '#fff',
     fontSize: 12,
     fontWeight: '600',
   },
-  webViewContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.background,
+  payButton: {
+    marginTop: 12,
   },
   centerContainer: {
     flex: 1,
@@ -311,6 +470,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  paymentComplete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    backgroundColor: Colors.success + '20', // Add slight transparency
+    borderRadius: 8,
+  },
+  paymentCompleteText: {
+    marginLeft: 8,
+    color: Colors.success,
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 
