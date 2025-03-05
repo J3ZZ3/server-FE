@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView, Image, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image, Animated } from 'react-native';
+import { Video } from 'expo-av';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
-
-// Background image URL
-const backgroundImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/rice-9083821_1280.jpg';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -13,6 +11,9 @@ const RestaurantDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  
+  // Animated value for background
+  const animatedValue = new Animated.Value(0);
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
@@ -29,6 +30,20 @@ const RestaurantDetailScreen = () => {
 
     fetchRestaurantDetails();
   }, [restaurantId]);
+
+  useEffect(() => {
+    // Start the animation
+    const animateBackground = () => {
+      animatedValue.setValue(0); // Reset the animated value
+      Animated.timing(animatedValue, {
+        toValue: 1,
+        duration: 3000,
+        useNativeDriver: false,
+      }).start(() => animateBackground()); // Loop the animation
+    };
+
+    animateBackground();
+  }, []);
 
   const handleReservePress = () => {
     router.push({
@@ -61,15 +76,25 @@ const RestaurantDetailScreen = () => {
     return <Text style={styles.errorText}>Restaurant not found</Text>;
   }
 
+  // Interpolating the animated value for background color
+  const backgroundColor = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['rgba(255, 107, 0, 0.8)', 'rgba(255, 140, 0, 0.8)'], // Dynamic colors
+  });
+
   return (
-    <ImageBackground 
-      source={{ uri: backgroundImage }} 
-      style={styles.container}
-      resizeMode="cover"
-    >
+    <View style={styles.container}>
+      <Video
+        source={{ uri: 'https://cdn.pixabay.com/video/2024/11/03/239700_large.mp4' }}
+        style={styles.video}
+        resizeMode="cover"
+        shouldPlay
+        isLooping
+      />
+      <View style={styles.overlay} />
       <ScrollView style={styles.scrollView}>
         <Image
-          source={{ uri: restaurant?.imageUrl || 'https://cdn.pixabay.com/photo/2016/08/25/03/05/japans-1618638_1280.jpg' }}
+          source={{ uri: restaurant?.imageUrl || 'https://cdn.pixabay.com/photo/2024/09/29/17/02/windows-9083830_960_720.jpg' }}
           style={styles.headerImage}
         />
         
@@ -87,16 +112,36 @@ const RestaurantDetailScreen = () => {
           </View>
         </View>
       </ScrollView>
-    </ImageBackground>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    position: 'relative',
+  },
+  video: {
+    position: 'absolute',
+    top: 130,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: '100%',
+    width: '100%',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 130,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)', // Adjust opacity as needed (0.5 = 50% transparent)
+    zIndex: 1,
   },
   scrollView: {
     flex: 1,
+    zIndex: 2, // Increased to be above both video and overlay
   },
   headerImage: {
     width: '100%',
@@ -105,24 +150,20 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    backgroundColor: 'rgba(255, 255, 255, 0)', // Semi-transparent background for readability
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: -30,
+    marginTop: 30,
     padding: 20,
-    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: -4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    }
   },
   title: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#332e31',
+    color: '#ffffff',
     marginBottom: 16,
   },
   subtitle: {
