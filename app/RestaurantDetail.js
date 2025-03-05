@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image, Animated, Linking } from 'react-native';
 import { Video } from 'expo-av';
 import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
+import MapView, { Marker } from 'react-native-maps';
+import * as Location from 'expo-location';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -11,6 +13,7 @@ const RestaurantDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
+  const [location, setLocation] = useState(null);
   
   // Animated value for background
   const animatedValue = new Animated.Value(0);
@@ -45,6 +48,17 @@ const RestaurantDetailScreen = () => {
     animateBackground();
   }, []);
 
+  useEffect(() => {
+    // Request location permissions and get initial location
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Denied', 'Location permission is required to show the map.');
+        return;
+      }
+    })();
+  }, []);
+
   const handleReservePress = () => {
     router.push({
       pathname: '/reservation',
@@ -54,6 +68,28 @@ const RestaurantDetailScreen = () => {
         token: token
       }
     });
+  };
+
+  const handleCallPress = async () => {
+    if (!restaurant?.contact) {
+      Alert.alert('Error', 'No contact number available');
+      return;
+    }
+
+    // Remove any non-numeric characters from the phone number
+    const phoneNumber = restaurant.contact.replace(/\D/g, '');
+    
+    try {
+      const supported = await Linking.canOpenURL(`tel:${phoneNumber}`);
+      
+      if (supported) {
+        await Linking.openURL(`tel:${phoneNumber}`);
+      } else {
+        Alert.alert('Error', 'Phone calls are not supported on this device');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not make phone call');
+    }
   };
 
   if (loading) {
@@ -102,9 +138,32 @@ const RestaurantDetailScreen = () => {
           <Text style={styles.title}>{restaurant.name}</Text>
           <Text style={styles.subtitle}>{restaurant.cuisine}</Text>
           <Text style={styles.location}>{restaurant.location}</Text>
-          <Text style={styles.contact}>{restaurant.contact}</Text>
+          <Text style={[styles.contact, styles.clickable]} onPress={handleCallPress}>
+            {restaurant.contact}
+          </Text>
           <Text style={styles.description}>{restaurant.description}</Text>
           
+          <View style={styles.mapContainer}>
+            <MapView
+              style={styles.map}
+              initialRegion={{
+                latitude: restaurant.latitude || 0,
+                longitude: restaurant.longitude || 0,
+                latitudeDelta: 0.005,
+                longitudeDelta: 0.005,
+              }}
+            >
+              <Marker
+                coordinate={{
+                  latitude: restaurant.latitude || 0,
+                  longitude: restaurant.longitude || 0,
+                }}
+                title={restaurant.name}
+                description={restaurant.location}
+              />
+            </MapView>
+          </View>
+
           <View style={styles.reserveButton}>
             <Text style={styles.reserveButtonText} onPress={handleReservePress}>
               Reserve a Table
@@ -153,7 +212,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0)', // Semi-transparent background for readability
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    marginTop: 30,
+    marginTop: -15,
     padding: 20,
     shadowOffset: {
       width: 0,
@@ -165,31 +224,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
     marginBottom: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   subtitle: {
     fontSize: 20,
-    color: '#cc866f',
+    color: '#fff',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   location: {
     fontSize: 16,
-    color: '#666666',
+    color: '#fff',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   contact: {
     fontSize: 16,
     color: '#666666',
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
+  },
+  clickable: {
+    textDecorationLine: 'underline',
   },
   description: {
     fontSize: 16,
-    color: '#999999',
+    color: '#fff',
     lineHeight: 24,
     marginTop: 16,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 1,
   },
   reserveButton: {
     height: 55,
-    marginTop: 24,
+    marginTop: 15,
     borderRadius: 20,
     backgroundColor: '#cc866f',
     alignItems: 'center',
@@ -211,6 +288,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginHorizontal: 20,
+  },
+  mapContainer: {
+    height: 200,
+    marginVertical: 16,
+    borderRadius: 15,
+    overflow: 'hidden',
+  },
+  map: {
+    width: '100%',
+    height: '100%',
   },
 });
 
