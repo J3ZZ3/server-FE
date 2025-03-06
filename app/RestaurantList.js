@@ -18,6 +18,7 @@ import { fetchRestaurants } from './services/api';
 import Navbar from './components/Navbar';
 import SearchBar from './components/SearchBar';
 import PromoBanner from './components/PromoBanner';
+import CuisineFilter from './components/CuisineFilter';
 
 // URL for the background image
 const backgroundImage = 'https://res.cloudinary.com/dmdmv15pl/image/upload/v1741251194/splash_1_v93eis.png';
@@ -31,6 +32,8 @@ const RestaurantList = () => {
   const [isNavigatorVisible, setNavigatorVisible] = useState(false);
   const [token, setToken] = useState(null); // State to hold the token
   const navigation = useNavigation();
+  const [selectedCuisine, setSelectedCuisine] = useState(null);
+  const [cuisines, setCuisines] = useState([]);
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -58,18 +61,41 @@ const RestaurantList = () => {
     fetchRestaurantData();
   }, []);
 
+  useEffect(() => {
+    if (restaurants.length > 0) {
+      const uniqueCuisines = [...new Set(restaurants.map(restaurant => restaurant.cuisine))];
+      setCuisines(uniqueCuisines);
+    }
+  }, [restaurants]);
+
   const handleSearch = (text) => {
     setSearchQuery(text);
+    filterRestaurants(text, selectedCuisine);
+  };
+
+  const handleCuisineFilter = (cuisine) => {
+    setSelectedCuisine(cuisine);
+    filterRestaurants(searchQuery, cuisine);
+  };
+
+  const filterRestaurants = (text, cuisine) => {
+    let filtered = restaurants;
+    
     if (text) {
-      const filtered = restaurants.filter(restaurant => 
+      filtered = filtered.filter(restaurant => 
         restaurant.name.toLowerCase().includes(text.toLowerCase()) ||
         restaurant.cuisine.toLowerCase().includes(text.toLowerCase()) ||
         restaurant.location.toLowerCase().includes(text.toLowerCase())
       );
-      setFilteredRestaurants(filtered);
-    } else {
-      setFilteredRestaurants(restaurants);
     }
+    
+    if (cuisine) {
+      filtered = filtered.filter(restaurant => 
+        restaurant.cuisine === cuisine
+      );
+    }
+    
+    setFilteredRestaurants(filtered);
   };
 
   const renderRestaurantItem = ({ item }) => (
@@ -100,7 +126,11 @@ const RestaurantList = () => {
       <View style={styles.container}>
         <Navbar />
         <View style={styles.content}>
-          
+          <CuisineFilter
+            selectedCuisine={selectedCuisine}
+            onSelectCuisine={handleCuisineFilter}
+            cuisines={cuisines}
+          />
           <SearchBar
             value={searchQuery}
             onChangeText={handleSearch}

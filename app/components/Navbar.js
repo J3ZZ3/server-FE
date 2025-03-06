@@ -1,39 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Pressable, Alert, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Platform, Pressable, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { logout } from '../services/api';
-import { SvgXml } from 'react-native-svg';
-import Logo from '../../assets/mylogo.svg';
+import AnimatedTitle from './AnimatedTitle';
 
 export default function Navbar() {
   const [showMenu, setShowMenu] = useState(false);
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      Alert.alert(
-        "Logout",
-        "Are you sure you want to logout?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel"
-          },
-          {
-            text: "Logout",
-            onPress: async () => {
-              await logout();
-              router.replace('/login');
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      console.error('Error logging out:', error);
-      Alert.alert('Error', 'Failed to logout. Please try again.');
-    }
-  };
+  const facts = [
+    "Omakase (お任せ) means 'I leave it up to you' in Japanese 🍱",
+    "The art of omakase dining can trace its roots back to ancient Japan ⛩️",
+    "You've found our secret tap counter! Keep exploring! 🌟",
+    "You're officially an Omakase superfan! 🏆"
+  ];
 
   const menuItems = [
     {
@@ -54,7 +35,7 @@ export default function Navbar() {
     {
       label: 'Logout',
       icon: 'log-out-outline',
-      onPress: handleLogout,
+      onPress: logout,
     },
   ];
 
@@ -62,7 +43,11 @@ export default function Navbar() {
     <>
       <View style={styles.container}>
         <View style={styles.leftSection}>
-          <Text style={styles.title}>Omakase</Text>
+          <AnimatedTitle 
+            title="Omakase"
+            facts={facts}
+            factTriggers={[3, 5, 7, 10]}
+          />
         </View>
 
         <View style={styles.rightSection}>
@@ -118,28 +103,6 @@ const styles = StyleSheet.create({
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#e4d4c6',
-    letterSpacing: 2,
-    textShadowColor: '#252228',
-    textShadowOffset: { width: -1, height: -1 },
-    textShadowRadius: 0,
-    textShadowColor: '#252228',
-    textShadowOffset: { width: -1, height: -1 },
-    textShadowRadius: 0,
-    textShadowColor: '#252228',
-    textShadowOffset: { width: 1, height: -1 },
-    textShadowRadius: 0,
-    textShadowColor: '#252228',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 0,
-    textShadowColor: '#252228',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 0,
-    fontFamily: Platform.OS === 'ios' ? 'Hiragino Mincho ProN' : 'serif',
   },
   rightSection: {
     position: 'relative',

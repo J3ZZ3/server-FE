@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image, Animated, Linking, TouchableOpacity } from 'react-native';
 import { Video } from 'expo-av';
-import axios from 'axios';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
-import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import api from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import RestaurantHeader from './components/RestaurantHeader';
+import QuickInfo from './components/QuickInfo';
+import MenuPreview from './components/MenuPreview';
+import LocationMap from './components/LocationMap';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -37,20 +39,6 @@ const RestaurantDetailScreen = () => {
   }, [restaurantId]);
 
   useEffect(() => {
-    // Start the animation
-    const animateBackground = () => {
-      animatedValue.setValue(0); // Reset the animated value
-      Animated.timing(animatedValue, {
-        toValue: 1,
-        duration: 3000,
-        useNativeDriver: false,
-      }).start(() => animateBackground()); // Loop the animation
-    };
-
-    animateBackground();
-  }, []);
-
-  useEffect(() => {
     // Request location permissions and get initial location
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -63,7 +51,6 @@ const RestaurantDetailScreen = () => {
 
   const handleReservePress = async () => {
     try {
-      // Check if token exists in AsyncStorage as fallback
       const storedToken = await AsyncStorage.getItem('userToken');
       const authToken = token || storedToken;
 
@@ -74,7 +61,7 @@ const RestaurantDetailScreen = () => {
           [
             {
               text: 'OK',
-              onPress: () => router.push('/login')  // Redirect to login page
+              onPress: () => router.push('/Login')
             }
           ]
         );
@@ -82,11 +69,12 @@ const RestaurantDetailScreen = () => {
       }
 
       router.push({
-        pathname: '/reservation',
+        pathname: '/Reservation',
         params: {
           restaurantId: restaurantId,
           restaurantName: restaurant?.name,
-          token: authToken
+          token: authToken,
+          basePrice: restaurant?.pricing?.basePrice || 0
         }
       });
     } catch (error) {
@@ -148,67 +136,6 @@ const RestaurantDetailScreen = () => {
     return <Text style={styles.errorText}>Restaurant not found</Text>;
   }
 
-  // Interpolating the animated value for background color
-  const backgroundColor = animatedValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['rgba(255, 107, 0, 0.8)', 'rgba(255, 140, 0, 0.8)'], // Dynamic colors
-  });
-
-  // Custom map style - Japanese-inspired dark theme
-  const customMapStyle = [
-    {
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#242f3e"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#e4d4c6"
-        }
-      ]
-    },
-    {
-      "elementType": "labels.text.stroke",
-      "stylers": [
-        {
-          "color": "#242f3e"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#38414e"
-        }
-      ]
-    },
-    {
-      "featureType": "road",
-      "elementType": "geometry.stroke",
-      "stylers": [
-        {
-          "color": "#212a37"
-        }
-      ]
-    },
-    {
-      "featureType": "water",
-      "elementType": "geometry",
-      "stylers": [
-        {
-          "color": "#17263c"
-        }
-      ]
-    }
-  ];
-
   return (
     <View style={styles.container}>
       <Video
@@ -228,84 +155,20 @@ const RestaurantDetailScreen = () => {
         />
         
         <View style={styles.contentContainer}>
-          {/* Restaurant Name and Basic Info */}
-          <View style={styles.headerSection}>
-            <Text style={styles.title}>{restaurant.name}</Text>
-            <Text style={styles.cuisine}>{restaurant.cuisine}</Text>
-            <View style={styles.ratingContainer}>
-              <Ionicons name="star" size={20} color="#FFD700" />
-              <Text style={styles.rating}>{restaurant.rating || 4.5}</Text>
-            </View>
-          </View>
-
-          {/* Quick Info Cards */}
-          <View style={styles.quickInfoContainer}>
-            <View style={styles.infoCard}>
-              <Ionicons name="time-outline" size={24} color="#e4d4c6" />
-              <Text style={styles.infoText}>
-                Today: {formatOpeningHours(restaurant.openingHours?.[getDayOfWeek()])}
-              </Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Ionicons name="people-outline" size={24} color="#e4d4c6" />
-              <Text style={styles.infoText}>Max Group: {restaurant.maxGroupSize}</Text>
-            </View>
-            <View style={styles.infoCard}>
-              <Ionicons name="cash-outline" size={24} color="#e4d4c6" />
-              <Text style={styles.infoText}>From ${restaurant.pricing?.basePrice}/person</Text>
-            </View>
-          </View>
-
-          {/* Description */}
+          <RestaurantHeader restaurant={restaurant} />
+          <QuickInfo 
+            restaurant={restaurant} 
+            formatOpeningHours={formatOpeningHours}
+            getDayOfWeek={getDayOfWeek}
+          />
+          
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About</Text>
             <Text style={styles.description}>{restaurant.description}</Text>
           </View>
 
-          {/* Menu Preview */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Popular Items</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {restaurant.menu?.map((item, index) => (
-                <View key={index} style={styles.menuItem}>
-                  <Text style={styles.menuItemName}>{item.item}</Text>
-                  <Text style={styles.menuItemPrice}>${item.price}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Location */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Location</Text>
-            <Text style={styles.location}>{restaurant.location}</Text>
-            <View style={styles.mapContainer}>
-              <MapView
-                style={styles.map}
-                mapType="satellite"
-                initialRegion={{
-                  latitude: restaurant.latitude || 35.6762,
-                  longitude: restaurant.longitude || 139.6503,
-                  latitudeDelta: 0.002,
-                  longitudeDelta: 0.002,
-                }}
-              >
-                <Marker
-                  coordinate={{
-                    latitude: restaurant.latitude || 35.6762,
-                    longitude: restaurant.longitude || 139.6503,
-                  }}
-                >
-                  <View style={styles.markerContainer}>
-                    <View style={styles.marker}>
-                      <Ionicons name="location" size={24} color="#e4d4c6" />
-                    </View>
-                    <View style={styles.markerShadow} />
-                  </View>
-                </Marker>
-              </MapView>
-            </View>
-          </View>
+          <MenuPreview menu={restaurant.menu} />
+          <LocationMap restaurant={restaurant} />
 
           {/* Contact and Actions */}
           <View style={styles.actionContainer}>
@@ -313,7 +176,10 @@ const RestaurantDetailScreen = () => {
               <Ionicons name="call" size={24} color="#e4d4c6" />
               <Text style={styles.actionButtonText}>Call</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.primaryButton]} onPress={handleReservePress}>
+            <TouchableOpacity 
+              style={[styles.actionButton, styles.primaryButton]} 
+              onPress={handleReservePress}
+            >
               <Text style={styles.primaryButtonText}>Reserve a Table</Text>
             </TouchableOpacity>
           </View>

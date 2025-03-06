@@ -14,6 +14,7 @@ const ReservationDetailScreen = () => {
   const { reservationId, token } = useLocalSearchParams();
   const [reservation, setReservation] = useState({
     numberOfGuests: 1,
+    basePrice: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,11 +30,15 @@ const ReservationDetailScreen = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        // Ensure we have the complete reservation data
-        const reservationData = response.data;
-        setReservation(reservationData);
+        const restaurantResponse = await api.get(`/restaurants/${response.data.restaurantId._id}`);
+        const basePrice = restaurantResponse.data.pricing.basePrice;
         
-        console.log('Fetched reservation:', reservationData); // For debugging
+        setReservation({
+          ...response.data,
+          basePrice: basePrice
+        });
+        
+        console.log('Fetched reservation:', response.data); // For debugging
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch reservation details');
       } finally {
@@ -48,10 +53,10 @@ const ReservationDetailScreen = () => {
     try {
       console.log('Initiating payment for reservation:', reservationId);
       const response = await api.post('/payments/create-order', {
-        amount: reservation.guests * 25,
+        amount: reservation.guests * reservation.basePrice,
         reservationId: reservationId,
         currency: 'USD',
-        description: `Reservation at ${reservation.restaurantName || reservation.restaurantId?.name || 'Restaurant'}`
+        description: `Reservation at ${reservation.restaurantId?.name || 'Restaurant'}`
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -155,7 +160,7 @@ const ReservationDetailScreen = () => {
         await api.post('/reservations/request-refund', {
           reservationId,
           email: reservation.email,
-          amount: reservation.guests * 25,
+          amount: reservation.guests * reservation.basePrice,
           restaurantName: reservation.restaurantId?.name,
           date: reservation.date,
           timeSlot: reservation.timeSlot
@@ -396,7 +401,10 @@ const ReservationDetailScreen = () => {
                 
                 <View style={styles.paymentDetails}>
                   <Text style={styles.amount}>
-                    Total Amount: ${reservation.guests * 25}
+                    Base Price per Guest: ${reservation.basePrice}
+                  </Text>
+                  <Text style={styles.amount}>
+                    Total Amount: ${reservation.guests * reservation.basePrice}
                   </Text>
                   <Text style={[
                     styles.paymentStatus,

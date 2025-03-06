@@ -5,9 +5,10 @@ import ReservationForm from './components/ReservationForm';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createReservation } from './services/api';
+import api from './services/api';
 
 export default function ReservationScreen() {
-  const { restaurantId, restaurantName } = useLocalSearchParams();
+  const { restaurantId, restaurantName, basePrice } = useLocalSearchParams();
   const router = useRouter();
 
   const handleReservation = async (reservationDetails) => {
@@ -30,17 +31,21 @@ export default function ReservationScreen() {
 
       console.log('Reservation response:', response);
 
+      // Calculate total amount using the passed basePrice
+      const totalAmount = reservationDetails.guests * basePrice;
+
       router.push({
-        pathname: '/reservationCost',
+        pathname: '/ReservationCost',
         params: {
           reservationId: response.reservation._id,
-          amount: reservationDetails.guests * 25,
+          amount: totalAmount,
           token: token,
           restaurantId: restaurantId,
           restaurantName: restaurantName,
           guests: reservationDetails.guests,
           date: reservationDetails.date,
-          time: reservationDetails.time
+          time: reservationDetails.time,
+          basePrice: basePrice
         }
       });
     } catch (err) {
@@ -50,7 +55,7 @@ export default function ReservationScreen() {
           'Session Expired',
           'Please login again to continue'
         );
-        router.push('/login');
+        router.push('/Login');
         return;
       }
       Alert.alert(

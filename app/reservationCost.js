@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ReservationCostScreen() {
-  const { reservationId, amount, token, restaurantId, guests, date, time } = useLocalSearchParams();
+  const { reservationId, amount, token, restaurantId, guests, date, time, basePrice } = useLocalSearchParams();
   const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -28,7 +28,7 @@ export default function ReservationCostScreen() {
 
   const handlePayment = () => {
     router.push({
-      pathname: '/payment',
+      pathname: '/Payment',
       params: { reservationId, amount, token }
     });
   };
@@ -98,8 +98,8 @@ export default function ReservationCostScreen() {
               <Text style={styles.sectionTitle}>Payment Details</Text>
             </View>
             <View style={styles.costRow}>
-              <Text style={styles.costLabel}>Reservation Fee per Guest</Text>
-              <Text style={styles.costValue}>$25.00</Text>
+              <Text style={styles.costLabel}>Base Price per Guest</Text>
+              <Text style={styles.costValue}>${basePrice}</Text>
             </View>
             <View style={styles.costRow}>
               <Text style={styles.costLabel}>Number of Guests</Text>

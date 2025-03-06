@@ -66,7 +66,7 @@ export const createReservation = async (reservationData) => {
     const formattedData = {
       restaurantId: reservationData.restaurantId,
       date: new Date(reservationData.date).toISOString(),
-      timeSlot: reservationData.timeSlot || reservationData.time, // Handle both field names
+      timeSlot: reservationData.timeSlot || reservationData.time,
       guests: parseInt(reservationData.guests),
       name: reservationData.name,
       email: reservationData.email,
@@ -75,7 +75,8 @@ export const createReservation = async (reservationData) => {
       specialRequests: reservationData.specialRequests || '',
       seatingPreference: (reservationData.seatingPreference || 'indoor').toLowerCase(),
       dietaryRestrictions: reservationData.dietaryRestrictions || '',
-      tablePreference: reservationData.tablePreference || 'No Preference'
+      tablePreference: reservationData.tablePreference || 'No Preference',
+      basePrice: reservationData.basePrice
     };
 
     const response = await api.post('/reservations', formattedData);

@@ -12,12 +12,14 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
-  LayoutAnimation
+  LayoutAnimation,
+  ImageBackground
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { logout, fetchUserProfile } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function Profile() {
   const router = useRouter();
@@ -179,122 +181,158 @@ export default function Profile() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <EditProfileModal />
-      
-      <View style={styles.header}>
-        <View style={styles.avatarContainer}>
-          <Ionicons name="person-circle" size={80} color="#007AFF" />
-        </View>
-        <Text style={styles.userName}>{userData?.name || 'User'}</Text>
-        <Text style={styles.userEmail}>{userData?.email || 'email@example.com'}</Text>
-        <Text style={styles.userRole}>{userData?.role || 'user'}</Text>
-      </View>
+    <ImageBackground 
+      source={{ uri: 'https://res.cloudinary.com/dmdmv15pl/image/upload/v1741251194/splash_1_v93eis.png' }} 
+      style={styles.backgroundImage}
+    >
+      <View style={styles.overlay}>
+        <ScrollView style={styles.container}>
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <Ionicons name="person-circle" size={80} color="#cc866f" />
+            </View>
+            <Text style={styles.userName}>{userData?.name || 'User'}</Text>
+            <Text style={styles.userEmail}>{userData?.email || 'email@example.com'}</Text>
+            <Text style={styles.userRole}>{userData?.role || 'user'}</Text>
+          </View>
 
-      <View style={styles.detailsSection}>
-        <Text style={styles.sectionTitle}>Contact Information</Text>
-        <View style={styles.detailItem}>
-          <Ionicons name="call-outline" size={24} color="#007AFF" />
-          <Text style={styles.detailText}>
-            {userData?.phoneNumber || 'No phone number added'}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Ionicons name="location-outline" size={24} color="#007AFF" />
-          <Text style={styles.detailText}>
-            {userData?.address || 'No address added'}
-          </Text>
-        </View>
-      </View>
+          <View style={styles.detailsSection}>
+            <Text style={styles.sectionTitle}>Contact Information</Text>
+            <View style={styles.detailItem}>
+              <Ionicons name="call-outline" size={24} color="#cc866f" />
+              <Text style={styles.detailText}>
+                {userData?.phoneNumber || 'No phone number added'}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="location-outline" size={24} color="#cc866f" />
+              <Text style={styles.detailText}>
+                {userData?.address || 'No address added'}
+              </Text>
+            </View>
+          </View>
 
-      <View style={styles.detailsSection}>
-        <Text style={styles.sectionTitle}>Preferences</Text>
-        <View style={styles.detailItem}>
-          <Ionicons name="nutrition-outline" size={24} color="#007AFF" />
-          <Text style={styles.detailText}>
-            {userData?.preferences?.dietaryRestrictions?.join(', ') || 'No dietary restrictions'}
-          </Text>
-        </View>
-        <View style={styles.detailItem}>
-          <Ionicons name="restaurant-outline" size={24} color="#007AFF" />
-          <Text style={styles.detailText}>
-            {userData?.preferences?.favoritesCuisine?.join(', ') || 'No favorite cuisines'}
-          </Text>
-        </View>
-      </View>
+          <View style={styles.detailsSection}>
+            <Text style={styles.sectionTitle}>Preferences</Text>
+            <View style={styles.detailItem}>
+              <Ionicons name="nutrition-outline" size={24} color="#cc866f" />
+              <Text style={styles.detailText}>
+                {userData?.preferences?.dietaryRestrictions?.join(', ') || 'No dietary restrictions'}
+              </Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="restaurant-outline" size={24} color="#cc866f" />
+              <Text style={styles.detailText}>
+                {userData?.preferences?.favoritesCuisine?.join(', ') || 'No favorite cuisines'}
+              </Text>
+            </View>
+          </View>
 
-      <View style={styles.menuSection}>
-        <TouchableOpacity 
-          style={styles.menuItem} 
-          onPress={() => router.push({
-            pathname: '/editProfile',
-            params: { 
-              userData: JSON.stringify(userData)
-            }
-          })}
-        >
-          <Ionicons name="person-outline" size={24} color="#007AFF" />
-          <Text style={styles.menuText}>Edit Profile</Text>
-          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-        </TouchableOpacity>
+          <View style={styles.menuSection}>
+            <TouchableOpacity 
+              style={styles.menuItem} 
+              onPress={() => router.push({
+                pathname: '/editProfile',
+                params: { userData: JSON.stringify(userData) }
+              })}
+            >
+              <Ionicons name="person-outline" size={24} color="#cc866f" />
+              <Text style={styles.menuText}>Edit Profile</Text>
+              <Ionicons name="chevron-forward" size={24} color="#e4d4c6" />
+            </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
-          <Text style={[styles.menuText, { color: '#FF3B30' }]}>Logout</Text>
-          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={24} color="#ff3b30" />
+              <Text style={[styles.menuText, { color: '#ff3b30' }]}>Logout</Text>
+              <Ionicons name="chevron-forward" size={24} color="#e4d4c6" />
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
-    </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+  },
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  centered: {
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
-    backgroundColor: '#FFFFFF',
     padding: 20,
     alignItems: 'center',
+    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    marginBottom: 16,
   },
   avatarContainer: {
     marginBottom: 10,
   },
   userName: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
+    color: '#e4d4c6',
     marginBottom: 5,
   },
   userEmail: {
     fontSize: 16,
-    color: '#666666',
+    color: '#cc866f',
     marginBottom: 5,
   },
   userRole: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#e4d4c6',
     textTransform: 'capitalize',
   },
+  detailsSection: {
+    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 16,
+    borderRadius: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#cc866f',
+    marginBottom: 12,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(228, 212, 198, 0.2)',
+  },
+  detailText: {
+    fontSize: 16,
+    color: '#e4d4c6',
+    marginLeft: 12,
+    flex: 1,
+  },
   menuSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 20,
+    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E5EA',
+    borderBottomColor: 'rgba(228, 212, 198, 0.2)',
   },
   menuText: {
-    fontSize: 17,
-    color: '#000000',
+    fontSize: 16,
+    color: '#e4d4c6',
     flex: 1,
     marginLeft: 12,
   },
@@ -351,27 +389,5 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
     fontWeight: 'bold',
-  },
-  detailsSection: {
-    backgroundColor: '#FFFFFF',
-    marginTop: 20,
-    padding: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000000',
-    marginBottom: 12,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  detailText: {
-    fontSize: 16,
-    color: '#666666',
-    marginLeft: 12,
-    flex: 1,
   },
 }); 
