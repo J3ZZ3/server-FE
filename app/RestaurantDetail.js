@@ -22,6 +22,7 @@ const RestaurantDetailScreen = () => {
   
   // Animated value for background
   const animatedValue = new Animated.Value(0);
+  const image = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/windows-9083830_960_720.jpg'; // Placeholder for restaurant image
 
   useEffect(() => {
     const fetchRestaurantDetails = async () => {
@@ -150,8 +151,8 @@ const RestaurantDetailScreen = () => {
       
       <ScrollView style={styles.scrollView}>
         <Image
-          source={{ uri: restaurant.imageUrl }}
-          style={styles.headerImage}
+          source={{ uri: image }}
+          style={styles.image}
         />
         
         <View style={styles.contentContainer}>
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     position: 'relative',
+    backgroundColor: '#000'
   },
   video: {
     position: 'absolute',
@@ -202,6 +204,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     height: '100%',
     width: '100%',
+    backgroundColor: '#000'
   },
   overlay: {
     position: 'absolute',
@@ -224,9 +227,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    marginTop: -30,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    marginTop: -10,
     padding: 20,
   },
   headerSection: {
@@ -395,6 +398,11 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
     borderWidth: 2,
     borderColor: '#e4d4c6',
+  },
+  image: {
+    width: '100%',
+    height: 200, // Adjust height as needed
+    marginBottom: 10,
   },
 });
 

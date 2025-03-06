@@ -22,7 +22,7 @@ export default function Settings() {
         {
           title: "Security Settings",
           icon: "lock-closed-outline",
-          onPress: () => router.push('/security'),
+          onPress: () => router.push('/Security'),
           description: "Password, email, and account security"
         },
         {
@@ -45,7 +45,7 @@ export default function Settings() {
         {
           title: "Help Center",
           icon: "help-circle-outline",
-          onPress: () => router.push('/support'),
+          onPress: () => router.push('/Support'),
           description: "FAQs and support resources"
         },
         {
@@ -57,7 +57,7 @@ export default function Settings() {
         {
           title: "Report an Issue",
           icon: "warning-outline",
-          onPress: () => router.push('/support'),
+          onPress: () => router.push('/Support'),
           description: "Report problems or submit feedback"
         }
       ]
@@ -68,19 +68,19 @@ export default function Settings() {
         {
           title: "About Omakase",
           icon: "information-circle-outline",
-          onPress: () => router.push('/about'),
+          onPress: () => router.push('/About'),
           description: "Learn more about Omakase"
         },
         {
           title: "Terms of Service",
           icon: "document-text-outline",
-          onPress: () => router.push('/terms'),
+          onPress: () => router.push('/Terms'),
           description: "Read our terms of service"
         },
         {
           title: "Privacy Policy",
           icon: "shield-checkmark-outline",
-          onPress: () => router.push('/privacy-policy'),
+          onPress: () => router.push('/PrivacyPolicy'),
           description: "View our privacy policy"
         }
       ]

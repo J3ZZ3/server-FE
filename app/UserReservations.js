@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, ImageBackground, SafeAreaView, Image } from 'react-native';
-import axios from 'axios';
+import { View, Text, StyleSheet, ActivityIndicator, SectionList, ImageBackground, SafeAreaView, TouchableOpacity, StatusBar } from 'react-native';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
-import { Colors } from './constants/colors';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import api from './services/api';
+import ReservationCalendar from './components/ReservationCalendar';
+import ReservationCard from './components/ReservationCard';
+import { Colors } from './constants/colors';
 
 // URL for the background image
-const backgroundImage = 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1';
+const backgroundImage = 'https://res.cloudinary.com/dmdmv15pl/image/upload/v1741251194/splash_1_v93eis.png';
 
 // Default restaurant image if none is provided
 const defaultRestaurantImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/soup-9083825_960_720.jpg';
@@ -17,6 +18,10 @@ const UserReservations = () => {
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); // Set default to today's date
+  const [filteredReservations, setFilteredReservations] = useState([]);
+  const [markedDates, setMarkedDates] = useState({});
+  const [isCalendarVisible, setIsCalendarVisible] = useState(true); // State to manage calendar visibility
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -27,6 +32,7 @@ const UserReservations = () => {
         });
         setReservations(response.data);
         setError(null);
+        markDatesWithReservations(response.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to fetch reservations');
       } finally {
@@ -37,57 +43,36 @@ const UserReservations = () => {
     fetchReservations();
   }, [token]);
 
+  const markDatesWithReservations = (reservations) => {
+    const dates = {};
+    reservations.forEach(reservation => {
+      const date = new Date(reservation.date).toISOString().split('T')[0]; // Format date as YYYY-MM-DD
+      dates[date] = { marked: true, dotColor: Colors.success }; // Mark the date with a green dot
+    });
+    setMarkedDates(dates);
+  };
+
+  useEffect(() => {
+    if (selectedDate) {
+      const filtered = reservations.filter(reservation => {
+        const reservationDate = new Date(reservation.date).toISOString().split('T')[0];
+        return reservationDate === selectedDate;
+      });
+      setFilteredReservations(filtered);
+    }
+  }, [selectedDate, reservations]);
+
   const renderReservationItem = ({ item }) => (
-    <TouchableOpacity 
-      style={styles.reservationItem}
+    <ReservationCard 
+      item={item} 
       onPress={() => navigation.navigate('ReservationDetail', { reservationId: item._id, token })}
-    >
-      <View style={styles.card}>
-        <ImageBackground 
-          source={{ uri: item.restaurant?.image || defaultRestaurantImage }} 
-          style={styles.restaurantImage}
-          defaultSource={{ uri: defaultRestaurantImage }}
-        >
-          <View style={styles.overlay}>
-            <View style={styles.contentContainer}>
-              <View style={styles.reservationHeader}>
-                <Text style={[styles.restaurantName, styles.lightText]}>{item.restaurant?.name}</Text>
-                <View style={[styles.statusBadge, 
-                  { backgroundColor: item.status === 'confirmed' ? Colors.success : Colors.primary }]}>
-                  <Text style={styles.statusText}>{item.status}</Text>
-                </View>
-              </View>
+    />
+  );
 
-              <View style={styles.detailsContainer}>
-                <View style={styles.infoRow}>
-                  <Ionicons name="calendar-outline" size={20} color="#fff" />
-                  <Text style={[styles.detailText, styles.lightText]}>
-                    {new Date(item.date).toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Ionicons name="time-outline" size={20} color="#fff" />
-                  <Text style={[styles.detailText, styles.lightText]}>{item.timeSlot}</Text>
-                </View>
-
-                <View style={styles.infoRow}>
-                  <Ionicons name="people-outline" size={20} color="#fff" />
-                  <Text style={[styles.detailText, styles.lightText]}>
-                    {item.guests} {item.guests === 1 ? 'Guest' : 'Guests'}
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </ImageBackground>
-      </View>
-    </TouchableOpacity>
+  const renderSectionHeader = ({ section: { title } }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionHeaderText}>{title}</Text>
+    </View>
   );
 
   if (loading) {
@@ -108,24 +93,39 @@ const UserReservations = () => {
 
   return (
     <ImageBackground source={{ uri: backgroundImage }} style={styles.backgroundImage}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent={true} />
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>My Reservations</Text>
+          <TouchableOpacity onPress={() => setIsCalendarVisible(prev => !prev)}>
+            <Ionicons 
+              name={isCalendarVisible ? "calendar-outline" : "calendar-sharp"} 
+              size={24} 
+              color={Colors.primary} 
+            />
+          </TouchableOpacity>
         </View>
 
-        {reservations.length === 0 ? (
+        {isCalendarVisible && (
+          <ReservationCalendar 
+            markedDates={markedDates} 
+            onDayPress={(day) => setSelectedDate(day.dateString)} 
+            selectedDate={selectedDate} 
+          />
+        )}
+
+        {filteredReservations.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={64} color={Colors.text.tertiary} />
-            <Text style={styles.emptyText}>No reservations found</Text>
-            <Text style={styles.emptySubtext}>Your upcoming reservations will appear here</Text>
+            <Text style={styles.emptyText}>No reservations found for this date</Text>
           </View>
         ) : (
-          <FlatList
-            data={reservations}
+          <SectionList
+            sections={[{ title: selectedDate, data: filteredReservations }]}
             renderItem={renderReservationItem}
             keyExtractor={(item) => item._id}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={true}
           />
         )}
       </SafeAreaView>
@@ -135,16 +135,19 @@ const UserReservations = () => {
 
 const styles = StyleSheet.create({
   backgroundImage: {
-    flex: 1,
+    flex: 1
   },
   container: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
   header: {
     padding: 20,
     paddingTop: 40,
     marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 28,
@@ -243,6 +246,18 @@ const styles = StyleSheet.create({
   },
   lightText: {
     color: '#fff', // Make text white for better contrast
+  },
+  sectionHeader: {
+    backgroundColor: 'rgba(37, 34, 40, 0.9)',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+    marginHorizontal: 20,
+  },
+  sectionHeaderText: {
+    color: '#e4d4c6',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
 

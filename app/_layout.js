@@ -50,7 +50,6 @@ export default function RootLayout() {
         />
           <Stack.Screen name="ReservationDetail" options={{ headerTitle: 'Reservation Details', headerShown: false }} />
         <Stack.Screen name="UserReservations" options={{ headerTitle: 'My Reservations' }} />
-        <Stack.Screen name="AddRestaurant" options={{ headerTitle: 'Add Restaurant' }} />
         <Stack.Screen 
           name="Navigator"
           options={{ 

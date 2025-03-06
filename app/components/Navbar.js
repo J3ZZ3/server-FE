@@ -1,13 +1,35 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Platform, Pressable, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Platform, Pressable, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { logout } from '../services/api';
+import { logout, fetchUserProfile, addProfileUpdateListener, removeProfileUpdateListener } from '../services/api';
 import AnimatedTitle from './AnimatedTitle';
 
 export default function Navbar() {
   const [showMenu, setShowMenu] = useState(false);
+  const [userData, setUserData] = useState(null);
   const router = useRouter();
+
+  useEffect(() => {
+    fetchUserData();
+    
+    // Add listener for profile updates
+    addProfileUpdateListener(fetchUserData);
+    
+    // Cleanup
+    return () => {
+      removeProfileUpdateListener(fetchUserData);
+    };
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const data = await fetchUserProfile();
+      setUserData(data);
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
+  };
 
   const facts = [
     "Omakase (お任せ) means 'I leave it up to you' in Japanese 🍱",
@@ -55,7 +77,14 @@ export default function Navbar() {
             onPress={() => setShowMenu(!showMenu)}
             style={styles.profileButton}
           >
-            <Ionicons name="person-circle-outline" size={40} color="#e4d4c6" />
+            {userData?.imageUrl ? (
+              <Image 
+                source={{ uri: userData.imageUrl }} 
+                style={styles.profileImage}
+              />
+            ) : (
+              <Ionicons name="person-circle-outline" size={40} color="#e4d4c6" />
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -108,9 +137,14 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   profileButton: {
-    padding: 8,
+    padding: 4,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
     borderRadius: 50,
+  },
+  profileImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   overlay: {
     position: 'absolute',

@@ -13,13 +13,16 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   LayoutAnimation,
-  ImageBackground
+  ImageBackground,
+  Image,
+  ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { logout, fetchUserProfile } from './services/api';
+import { logout, fetchUserProfile, uploadProfileImage } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function Profile() {
   const router = useRouter();
@@ -29,6 +32,7 @@ export default function Profile() {
   const [editedName, setEditedName] = useState('');
   const [editedEmail, setEditedEmail] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -117,6 +121,43 @@ export default function Profile() {
     );
   };
 
+  const pickImage = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (!permissionResult.granted) {
+        Alert.alert('Permission needed', 'Please grant permission to access your photos');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setUploading(true);
+        try {
+          const response = await uploadProfileImage(result.assets[0].uri);
+          setUserData(prev => ({
+            ...prev,
+            imageUrl: response.imageUrl
+          }));
+          await fetchUserProfileData();
+          Alert.alert('Success', 'Profile picture updated successfully');
+        } catch (error) {
+          Alert.alert('Error', 'Failed to update profile picture');
+        } finally {
+          setUploading(false);
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image');
+    }
+  };
+
   const EditProfileModal = () => (
     <Modal
       visible={isEditing}
@@ -188,9 +229,28 @@ export default function Profile() {
       <View style={styles.overlay}>
         <ScrollView style={styles.container}>
           <View style={styles.header}>
-            <View style={styles.avatarContainer}>
-              <Ionicons name="person-circle" size={80} color="#cc866f" />
-            </View>
+            <TouchableOpacity 
+              style={styles.avatarContainer} 
+              onPress={pickImage}
+              disabled={uploading}
+            >
+              {userData?.imageUrl ? (
+                <Image
+                  source={{ uri: userData.imageUrl }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <Ionicons name="person-circle" size={80} color="#cc866f" />
+              )}
+              {uploading && (
+                <View style={styles.uploadingOverlay}>
+                  <ActivityIndicator color="#cc866f" />
+                </View>
+              )}
+              <View style={styles.editIconContainer}>
+                <Ionicons name="camera" size={20} color="#e4d4c6" />
+              </View>
+            </TouchableOpacity>
             <Text style={styles.userName}>{userData?.name || 'User'}</Text>
             <Text style={styles.userEmail}>{userData?.email || 'email@example.com'}</Text>
             <Text style={styles.userRole}>{userData?.role || 'user'}</Text>
@@ -256,10 +316,12 @@ export default function Profile() {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
+    backgroundColor: 'rgba(37, 34, 40, 1)',
+
   },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(37, 34, 40, 0.8)',
   },
   container: {
     flex: 1,
@@ -267,11 +329,37 @@ const styles = StyleSheet.create({
   header: {
     padding: 20,
     alignItems: 'center',
-    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    backgroundColor: 'rgba(37, 34, 40, 0)',
     marginBottom: 16,
   },
   avatarContainer: {
     marginBottom: 10,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginTop: 10,
+  },
+  uploadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 40,
+  },
+  editIconContainer: {
+    position: 'absolute',
+    right: -5,
+    bottom: -5,
+    backgroundColor: '#cc866f',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#252228',
   },
   userName: {
     fontSize: 24,
@@ -290,7 +378,7 @@ const styles = StyleSheet.create({
     textTransform: 'capitalize',
   },
   detailsSection: {
-    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    backgroundColor: 'rgba(37, 34, 40, 0)',
     marginHorizontal: 16,
     marginBottom: 16,
     padding: 16,
@@ -317,7 +405,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   menuSection: {
-    backgroundColor: 'rgba(37, 34, 40, 0.8)',
+    backgroundColor: 'rgba(37, 34, 40, 0)',
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,

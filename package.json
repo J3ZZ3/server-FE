@@ -24,6 +24,7 @@
     "@reduxjs/toolkit": "^2.5.1",
     "@stripe/stripe-react-native": "0.37.2",
     "axios": "^1.8.1",
+    "cloudinary": "^2.5.1",
     "expo": "~51.0.28",
     "expo-av": "~14.0.7",
     "expo-blur": "~13.0.3",
@@ -39,9 +40,11 @@
     "expo-web-browser": "~13.0.3",
     "jwt-decode": "^4.0.0",
     "mkdirp": "^3.0.1",
+    "multer": "^1.4.5-lts.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-calendars": "^1.1310.0",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-maps": "1.14.0",
     "react-native-paper": "^5.13.1",
@@ -53,6 +56,7 @@
     "react-native-webview": "13.8.6",
     "react-redux": "^9.2.0",
     "rn-expo-paypal-integration": "^1.2.0",
+    "streamifier": "^0.1.1",
     "stripe": "^17.6.0"
   },
   "devDependencies": {

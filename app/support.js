@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import FeedbackForm from './components/FeedbackForm';
 
 export default function Support() {
   const router = useRouter();
@@ -38,12 +39,11 @@ export default function Support() {
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Help Center</Text>
-
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Need Assistance?</Text>
         <TouchableOpacity 
           style={styles.supportButton}
-          onPress={() => router.push('/report-issue')}
+          onPress={() => router.push('/ReportIssue')}
         >
           <Ionicons name="warning-outline" size={24} color="#cc866f" />
           <Text style={styles.supportButtonText}>Report an Issue</Text>

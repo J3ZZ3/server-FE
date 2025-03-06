@@ -50,8 +50,8 @@ export const logout = async () => {
 };
 
 export const fetchUserProfile = async () => {
-  const response = await api.get('/auth/me'); // Fetch user profile
-  return response.data; // Return the user data
+  const response = await api.get('/auth/me');
+  return response.data;
 };
 
 export const fetchRestaurants = async () => {
@@ -152,6 +152,52 @@ export const fetchUserReports = async () => {
     return response.data;
   } catch (error) {
     console.error('Fetch reports error:', error.response?.data || error);
+    throw error;
+  }
+};
+
+// Add this at the top of the file
+let profileUpdateListeners = [];
+
+export const addProfileUpdateListener = (listener) => {
+  profileUpdateListeners.push(listener);
+};
+
+export const removeProfileUpdateListener = (listener) => {
+  profileUpdateListeners = profileUpdateListeners.filter(l => l !== listener);
+};
+
+export const notifyProfileUpdate = () => {
+  profileUpdateListeners.forEach(listener => listener());
+};
+
+// Update the uploadProfileImage function
+export const uploadProfileImage = async (imageUri) => {
+  try {
+    // Create form data
+    const formData = new FormData();
+    const filename = imageUri.split('/').pop();
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : `image`;
+
+    formData.append('image', {
+      uri: imageUri,
+      name: filename,
+      type
+    });
+
+    const response = await api.post('/auth/me/profile-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    // Notify listeners of the profile update
+    notifyProfileUpdate();
+    
+    return response.data;
+  } catch (error) {
+    console.error('Upload profile image error:', error);
     throw error;
   }
 };
