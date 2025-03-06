@@ -1,134 +1,67 @@
-import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Linking,
-  Alert,
-  TextInput
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import api from './services/api';
 
 export default function Support() {
   const router = useRouter();
-  const [message, setMessage] = useState('');
 
-  const faqs = [
+  const faqSections = [
     {
-      question: "How do I make a reservation?",
-      answer: "To make a reservation, browse restaurants and click on your chosen restaurant. Select your preferred date, time, and number of guests, then confirm your booking. You'll receive a confirmation email with your reservation details.",
-      icon: "calendar-outline"
+      title: "Reservations",
+      questions: [
+        {
+          question: "How do I make a reservation?",
+          answer: "To make a reservation, simply search for a restaurant, select your preferred date and time, and confirm your booking. You'll receive a confirmation email shortly after."
+        },
+        {
+          question: "How do I cancel my reservation?",
+          answer: "You can cancel your reservation through the 'My Bookings' section in the app. Please note that cancellation policies vary by restaurant."
+        }
+      ]
     },
     {
-      question: "How can I modify or cancel my reservation?",
-      answer: "You can view and manage your reservations in the 'My Reservations' section. To modify or cancel, select the reservation and choose the appropriate action. Please note that some changes may be subject to restaurant policies.",
-      icon: "create-outline"
-    },
-    {
-      question: "What payment methods are accepted?",
-      answer: "We accept various payment methods including credit/debit cards and pay-at-restaurant options. Payment methods may vary by restaurant. You can view available payment options during the booking process.",
-      icon: "card-outline"
-    },
-    {
-      question: "How do I update my dietary preferences?",
-      answer: "You can update your dietary preferences in your profile settings. This information will be shared with restaurants to better accommodate your needs during your visit.",
-      icon: "nutrition-outline"
+      title: "Common Issues",
+      questions: [
+        {
+          question: "The app is not loading properly",
+          answer: "Try closing and reopening the app. If the issue persists, check your internet connection or try updating the app."
+        },
+        {
+          question: "I can't modify my reservation",
+          answer: "Some restaurants don't allow modifications within 24 hours of the reservation. Contact the restaurant directly for last-minute changes."
+        }
+      ]
     }
   ];
-
-  const contactMethods = [
-    {
-      title: "Email Support",
-      description: "Get help via email within 24 hours",
-      icon: "mail-outline",
-      action: () => Linking.openURL('mailto:support@priority.com')
-    },
-    {
-      title: "Phone Support",
-      description: "Available Mon-Fri, 9AM-5PM",
-      icon: "call-outline",
-      action: () => Linking.openURL('tel:+1234567890')
-    },
-    {
-      title: "Live Chat",
-      description: "Chat with our support team",
-      icon: "chatbubbles-outline",
-      action: () => Alert.alert('Coming Soon', 'Live chat support will be available soon!')
-    }
-  ];
-
-  const handleSendFeedback = async () => {
-    if (!message.trim()) {
-      Alert.alert('Error', 'Please enter your feedback');
-      return;
-    }
-
-    try {
-      await api.post('/feedback', {
-        message: message.trim()
-      });
-      Alert.alert('Thank You!', 'Your feedback has been submitted successfully');
-      setMessage('');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit feedback. Please try again later.');
-    }
-  };
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-        {faqs.map((faq, index) => (
-          <View key={index} style={styles.faqItem}>
-            <Ionicons name={faq.icon} size={24} color="#007AFF" style={styles.faqIcon} />
-            <View style={styles.faqContent}>
-              <Text style={styles.question}>{faq.question}</Text>
-              <Text style={styles.answer}>{faq.answer}</Text>
-            </View>
-          </View>
-        ))}
-      </View>
+      <Text style={styles.title}>Help Center</Text>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Contact Us</Text>
-        {contactMethods.map((method, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.contactItem}
-            onPress={method.action}
-          >
-            <Ionicons name={method.icon} size={24} color="#007AFF" />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactTitle}>{method.title}</Text>
-              <Text style={styles.contactDescription}>{method.description}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Send Feedback</Text>
-        <TextInput
-          style={styles.feedbackInput}
-          placeholder="Share your thoughts or report an issue..."
-          value={message}
-          onChangeText={setMessage}
-          multiline
-          numberOfLines={4}
-          textAlignVertical="top"
-        />
+        <Text style={styles.sectionTitle}>Need Assistance?</Text>
         <TouchableOpacity 
-          style={styles.feedbackButton}
-          onPress={handleSendFeedback}
+          style={styles.supportButton}
+          onPress={() => router.push('/report-issue')}
         >
-          <Text style={styles.buttonText}>Submit Feedback</Text>
+          <Ionicons name="warning-outline" size={24} color="#cc866f" />
+          <Text style={styles.supportButtonText}>Report an Issue</Text>
+          <Ionicons name="chevron-forward" size={24} color="#C7C7CC" />
         </TouchableOpacity>
       </View>
+
+      {faqSections.map((section, index) => (
+        <View key={index} style={styles.section}>
+          <Text style={styles.sectionTitle}>{section.title}</Text>
+          {section.questions.map((item, itemIndex) => (
+            <View key={itemIndex} style={styles.faqItem}>
+              <Text style={styles.question}>{item.question}</Text>
+              <Text style={styles.answer}>{item.answer}</Text>
+            </View>
+          ))}
+        </View>
+      ))}
     </ScrollView>
   );
 }
@@ -140,82 +73,63 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#000000',
+    marginTop: 20,
   },
   section: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#000000',
+    fontSize: 20,
+    fontWeight: '600',
+    marginBottom: 16,
+    color: '#1C1C1E',
   },
   faqItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  faqIcon: {
-    marginRight: 10,
-    marginTop: 3,
-  },
-  faqContent: {
-    flex: 1,
-  },
-  question: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 5,
-    color: '#000000',
-  },
-  answer: {
-    fontSize: 14,
-    color: '#666666',
-    lineHeight: 20,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
+    marginBottom: 16,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
   },
-  contactContent: {
+  question: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  answer: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#3A3A3C',
+  },
+  supportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: '#F8F8F8',
+    paddingHorizontal: 16,
+  },
+  supportButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000000',
     flex: 1,
     marginLeft: 12,
-  },
-  contactTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
-  },
-  contactDescription: {
-    fontSize: 14,
-    color: '#666666',
-  },
-  feedbackInput: {
-    borderWidth: 1,
-    borderColor: '#E5E5EA',
-    borderRadius: 8,
-    padding: 12,
-    height: 100,
-    marginBottom: 15,
-  },
-  feedbackButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 }); 

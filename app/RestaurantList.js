@@ -5,8 +5,6 @@ import {
   FlatList, 
   StyleSheet, 
   ActivityIndicator, 
-  TextInput, 
-  TouchableOpacity, 
   ImageBackground 
 } from 'react-native';
 import axios from 'axios';
@@ -17,9 +15,12 @@ import Navigator from './Navigator'; // Import the Navigator component
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons
 import { fetchRestaurants } from './services/api';
+import Navbar from './components/Navbar';
+import SearchBar from './components/SearchBar';
+import PromoBanner from './components/PromoBanner';
 
 // URL for the background image
-const backgroundImage = 'https://images.pexels.com/photos/5086628/pexels-photo-5086628.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1'; // Replace with your image URL
+const backgroundImage = 'https://res.cloudinary.com/dmdmv15pl/image/upload/v1741251194/splash_1_v93eis.png';
 
 const RestaurantList = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -57,18 +58,19 @@ const RestaurantList = () => {
     fetchRestaurantData();
   }, []);
 
-  useEffect(() => {
-    if (searchQuery) {
+  const handleSearch = (text) => {
+    setSearchQuery(text);
+    if (text) {
       const filtered = restaurants.filter(restaurant => 
-        restaurant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        restaurant.cuisine.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        restaurant.location.toLowerCase().includes(searchQuery.toLowerCase())
+        restaurant.name.toLowerCase().includes(text.toLowerCase()) ||
+        restaurant.cuisine.toLowerCase().includes(text.toLowerCase()) ||
+        restaurant.location.toLowerCase().includes(text.toLowerCase())
       );
       setFilteredRestaurants(filtered);
     } else {
       setFilteredRestaurants(restaurants);
     }
-  }, [searchQuery, restaurants]);
+  };
 
   const renderRestaurantItem = ({ item }) => (
     <RestaurantCard 
@@ -96,28 +98,24 @@ const RestaurantList = () => {
   return (
     <ImageBackground source={{ uri: backgroundImage }} style={styles.backgroundImage}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dine Ease</Text>
-          <TouchableOpacity onPress={() => setNavigatorVisible(true)} style={styles.menuButton}>
-            <Ionicons name="menu-outline" size={24} color={Colors.text.primary} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search restaurants, cuisine, or location..."
+        <Navbar />
+        <View style={styles.content}>
+          
+          <SearchBar
             value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="rgba(0,0,0,0.4)"
+            onChangeText={handleSearch}
+            placeholder="Search restaurants, cuisine, or location..."
+            style={styles.searchContainer}
+          />
+          <PromoBanner />
+          <FlatList
+            data={filteredRestaurants}
+            keyExtractor={(item) => item._id?.toString()}
+            renderItem={renderRestaurantItem}
+            contentContainerStyle={styles.listContainer}
+            showsVerticalScrollIndicator={false}
           />
         </View>
-        <FlatList
-          data={filteredRestaurants}
-          keyExtractor={(item) => item._id?.toString()}
-          renderItem={renderRestaurantItem}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
         <Navigator isVisible={isNavigatorVisible} onClose={() => setNavigatorVisible(false)} token={token} />
       </View>
     </ImageBackground>
@@ -127,38 +125,20 @@ const RestaurantList = () => {
 const styles = StyleSheet.create({
   backgroundImage: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+
   },
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)', 
-    paddingTop: 30,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: Colors.primary,
-  },
-  menuButton: {
-    padding: 10,
+  content: {
+    flex: 1,
+    paddingTop: 0,
   },
   searchContainer: {
-    marginBottom: 20,
-  },
-  searchInput: {
-    height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
+    marginHorizontal: 20,
+    marginBottom: 15,
   },
   centerContainer: {
     flex: 1,
@@ -171,6 +151,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   listContainer: {
+    paddingHorizontal: 20,
     paddingBottom: 20,
   },
   restaurantCard: {

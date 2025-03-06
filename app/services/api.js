@@ -30,8 +30,23 @@ export const register = async (userData) => {
 };
 
 export const logout = async () => {
-  await AsyncStorage.removeItem('userToken');
-  delete api.defaults.headers.common['Authorization'];
+  try {
+    // Clear the stored token
+    await AsyncStorage.removeItem('userToken');
+    await AsyncStorage.removeItem('userRole');
+    await AsyncStorage.removeItem('userData');
+    
+    // Clear the authorization header
+    delete api.defaults.headers.common['Authorization'];
+    
+    // You could also make a server request to invalidate the token if needed
+    // await api.post('/auth/logout');
+    
+    return true;
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
+  }
 };
 
 export const fetchUserProfile = async () => {
@@ -99,6 +114,43 @@ export const requestRefund = async (refundData) => {
     return response.data;
   } catch (error) {
     console.error('Refund request error:', error.response?.data || error);
+    throw error;
+  }
+};
+
+export const updatePassword = async (passwordData) => {
+  const response = await api.put('/auth/me/password', passwordData);
+  return response.data;
+};
+
+export const updateEmail = async (emailData) => {
+  const response = await api.put('/auth/me/email', emailData);
+  return response.data;
+};
+
+export const deleteAccount = async () => {
+  const response = await api.delete('/auth/me');
+  await logout(); // Call the existing logout function
+  return response.data;
+};
+
+// Report-related functions
+export const submitReport = async (reportData) => {
+  try {
+    const response = await api.post('/reports', reportData);
+    return response.data;
+  } catch (error) {
+    console.error('Submit report error:', error.response?.data || error);
+    throw error;
+  }
+};
+
+export const fetchUserReports = async () => {
+  try {
+    const response = await api.get('/reports/my-reports');
+    return response.data;
+  } catch (error) {
+    console.error('Fetch reports error:', error.response?.data || error);
     throw error;
   }
 };

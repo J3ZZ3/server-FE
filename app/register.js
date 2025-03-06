@@ -107,8 +107,8 @@ export default function RegisterScreen() {
 
   return (
     <LinearGradient
-      colors={['#FF6B00', '#FF8C00']}
-      style={styles.container}
+    colors={[ '#e5d2bc', '#a5816a']}
+    style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
@@ -127,7 +127,7 @@ export default function RegisterScreen() {
               <View style={styles.absoluteLogoContainer}>
                 <Image 
                   source={require('../assets/logo.png')}
-                  style={[styles.logo, { tintColor: '#FFFFFF' }]}
+                  style={[styles.logo]}
                   resizeMode="contain"
                 />
               </View>
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
   },
   loginButtonText: {
-    color: '#FF6B00',
+    color: '#322e2e',
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.5,

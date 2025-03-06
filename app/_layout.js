@@ -15,7 +15,6 @@ export default function RootLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      {shouldShowNavbar && <Navbar />}
       <Stack screenOptions={{
         headerShown: false,
         headerTitleAlign: 'center',
@@ -63,6 +62,15 @@ export default function RootLayout() {
           name="Support" 
           options={{ 
             headerTitle: 'Help & Support',
+            presentation: 'card',
+            headerStyle: styles.header,
+            headerTitleStyle: styles.headerTitle,
+          }} 
+        />
+        <Stack.Screen 
+          name="Settings" 
+          options={{ 
+            headerTitle: 'Settings',
             presentation: 'card',
             headerStyle: styles.header,
             headerTitleStyle: styles.headerTitle,

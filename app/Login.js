@@ -89,10 +89,7 @@ export default function LoginScreen() {
     
           // Navigate after a short delay
           setTimeout(() => {
-            router.replace({
-              pathname: '/RestaurantList',
-              params: { token: response.token }
-            });
+            router.replace('/RestaurantList');
           }, 1500);
     
           console.log('Token:', response.token);
@@ -112,7 +109,7 @@ export default function LoginScreen() {
 
   return (
     <LinearGradient
-      colors={['#FF6B00', '#FF8C00']}
+      colors={[ '#e5d2bc', '#a5816a']}
       style={styles.container}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -132,7 +129,7 @@ export default function LoginScreen() {
               <View style={styles.absoluteLogoContainer}>
                 <Image 
                   source={require('../assets/logo.png')}
-                  style={[styles.logo, { tintColor: '#FFFFFF' }]}
+                  style={[styles.logo]}
                   resizeMode="contain"
                 />
               </View>
@@ -199,7 +196,7 @@ export default function LoginScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
                 
-                <Link href="/register" asChild>
+                <Link href="/Register" asChild>
                   <TouchableOpacity 
                     style={styles.registerButton}
                     disabled={loading}
@@ -320,7 +317,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
   },
   loginButtonText: {
-    color: '#FF6B00',
+    color: '#322e2e',
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.5,

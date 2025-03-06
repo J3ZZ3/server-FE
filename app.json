@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Clienta",
+    "name": "Omakase",
     "slug": "clienta",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,10 +10,18 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+    "ios": {
+      "splash": {
+        "splashScreenStayOpen": 4000
+      }
+    },
     "android": {
-      "package": "com.koji.FE",
+      "package": "com.koji.Omakase",
       "versionCode": 1,
-      "permissions": []
+      "permissions": [],
+      "splash": {
+        "splashScreenStayOpen": 4000
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"

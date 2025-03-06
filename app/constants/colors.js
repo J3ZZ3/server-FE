@@ -1,23 +1,24 @@
 // Create a new file for color constants
 export const Colors = {
-  primary: '#FF4B3E',       // Red for primary actions
-  secondary: '#2A2A2A',     // Dark grey for secondary elements
+  primary: '#e4d4c6',       // Japanese paper color for primary elements
+  secondary: '#252228',     // Dark charcoal for secondary elements
   
   // Backgrounds
-  background: '#FF8C42',    // Medium grey background
-  card: '#333333',         // Orange cards (instead of white)
+  background: 'rgba(0, 0, 0, 0.6)',  // Dark translucent background
+  card: 'rgba(0, 0, 0, 0.3)',        // Lighter translucent for cards
   
   // Text
   text: {
-    primary: '#FFFFFF',     // White text for dark backgrounds
-    secondary: '#F5F5F5',   // Light grey for secondary text
-    tertiary: '#CCCCCC',    // Lighter grey for tertiary text
-    light: '#FFFFFF',       // White text
-    dark: '#2A2A2A',       // Dark text for orange backgrounds
+    primary: '#e4d4c6',     // Japanese paper white for primary text
+    secondary: '#d1c4b7',   // Slightly darker shade for secondary text
+    tertiary: '#b3a89d',    // Even darker for tertiary text
+    light: '#e4d4c6',       // Light text
+    dark: '#252228',        // Dark text
+    outline: '#252228',     // Text outline color
   },
   
   // Accents
-  accent: '#333333',        // Orange accent for cards
+  accent: '#FF8C42',        // Warm orange accent (keeping this for contrast)
   
   // Status
   success: '#4CAF50',
@@ -25,11 +26,11 @@ export const Colors = {
   warning: '#FFC107',
   
   // Borders
-  border: 'rgba(255,255,255,0.1)', // Subtle white border
+  border: 'rgba(228,212,198,0.1)', // Subtle border using primary color
   
   // States
-  disabled: '#666666',
+  disabled: 'rgba(228,212,198,0.5)', // Semi-transparent primary color
   
   // Overlays
-  overlay: 'rgba(51,51,51,0.7)',
+  overlay: 'rgba(37,34,40,0.7)', // Dark overlay using secondary color
 }; 

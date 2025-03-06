@@ -1,14 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Pressable, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { logout } from '../services/api';
 import { SvgXml } from 'react-native-svg';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const logoSvg = `<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-  width="100%" viewBox="0 0 500 500" enable-background="new 0 0 500 500" xml:space="preserve">
-  <!-- ... existing SVG paths ... -->
-</svg>`;
+import Logo from '../../assets/mylogo.svg';
 
 export default function Navbar() {
   const [showMenu, setShowMenu] = useState(false);
@@ -16,10 +12,26 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await AsyncStorage.removeItem('userToken');
-      router.replace('/login');
+      Alert.alert(
+        "Logout",
+        "Are you sure you want to logout?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel"
+          },
+          {
+            text: "Logout",
+            onPress: async () => {
+              await logout();
+              router.replace('/login');
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('Error logging out:', error);
+      Alert.alert('Error', 'Failed to logout. Please try again.');
     }
   };
 
@@ -27,7 +39,7 @@ export default function Navbar() {
     {
       label: 'Profile',
       icon: 'person-outline',
-      onPress: () => router.push('/profile'),
+      onPress: () => router.push('/Profile'),
     },
     {
       label: 'My Reservations',
@@ -37,7 +49,7 @@ export default function Navbar() {
     {
       label: 'Settings',
       icon: 'settings-outline',
-      onPress: () => router.push('/settings'),
+      onPress: () => router.push('/Settings'),
     },
     {
       label: 'Logout',
@@ -50,8 +62,7 @@ export default function Navbar() {
     <>
       <View style={styles.container}>
         <View style={styles.leftSection}>
-          <SvgXml xml={logoSvg} width={40} height={40} />
-          <Text style={styles.title}>DineEase</Text>
+          <Text style={styles.title}>Omakase</Text>
         </View>
 
         <View style={styles.rightSection}>
@@ -59,7 +70,7 @@ export default function Navbar() {
             onPress={() => setShowMenu(!showMenu)}
             style={styles.profileButton}
           >
-            <Ionicons name="person-circle-outline" size={32} color="#cc866f" />
+            <Ionicons name="person-circle-outline" size={40} color="#e4d4c6" />
           </TouchableOpacity>
         </View>
       </View>
@@ -80,7 +91,7 @@ export default function Navbar() {
                     setShowMenu(false);
                   }}
                 >
-                  <Ionicons name={item.icon} size={24} color="#cc866f" />
+                  <Ionicons name={item.icon} size={24} color="#252228" />
                   <Text style={styles.menuText}>{item.label}</Text>
                 </TouchableOpacity>
               ))}
@@ -97,28 +108,46 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0)',
+    
     zIndex: 1,
+    marginTop: 20,
   },
   leftSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginLeft: 8,
-    color: '#cc866f',
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#e4d4c6',
+    letterSpacing: 2,
+    textShadowColor: '#252228',
+    textShadowOffset: { width: -1, height: -1 },
+    textShadowRadius: 0,
+    textShadowColor: '#252228',
+    textShadowOffset: { width: -1, height: -1 },
+    textShadowRadius: 0,
+    textShadowColor: '#252228',
+    textShadowOffset: { width: 1, height: -1 },
+    textShadowRadius: 0,
+    textShadowColor: '#252228',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 0,
+    textShadowColor: '#252228',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 0,
+    fontFamily: Platform.OS === 'ios' ? 'Hiragino Mincho ProN' : 'serif',
   },
   rightSection: {
     position: 'relative',
   },
   profileButton: {
-    padding: 4,
+    padding: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 50,
   },
   overlay: {
     position: 'absolute',
@@ -131,33 +160,40 @@ const styles = StyleSheet.create({
   },
   menuContainer: {
     position: 'absolute',
-    top: 60,
+    top: 70,
     right: 16,
     zIndex: 1000,
   },
   menu: {
     backgroundColor: '#ffffff',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 8,
-    minWidth: 200,
+    minWidth: 220,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 4,
+    padding: 14,
+    borderRadius: 8,
+    marginVertical: 2,
   },
   menuText: {
     marginLeft: 12,
     fontSize: 16,
-    color: '#333333',
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    right: 13,
   },
 }); 

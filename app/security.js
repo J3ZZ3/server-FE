@@ -17,9 +17,9 @@ export default function Security() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [newEmail, setNewEmail] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
   const handleUpdatePassword = async () => {
-    // Validate password inputs
     if (!currentPassword || !newPassword || !confirmPassword) {
       Alert.alert('Error', 'All password fields are required');
       return;
@@ -36,7 +36,7 @@ export default function Security() {
     }
 
     try {
-      await api.put('/user/password', {
+      await api.put('/auth/me/password', {
         currentPassword,
         newPassword
       });
@@ -50,7 +50,6 @@ export default function Security() {
   };
 
   const handleUpdateEmail = async () => {
-    // Validate email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(newEmail)) {
       Alert.alert('Error', 'Please enter a valid email address');
@@ -58,55 +57,72 @@ export default function Security() {
     }
 
     try {
-      const response = await api.put('/user/email', {
+      await api.put('/auth/me/email', {
         newEmail: newEmail.trim()
       });
-
       Alert.alert('Success', 'Email updated successfully');
       setNewEmail('');
     } catch (error) {
-      console.error('Email update error:', error);
       Alert.alert('Error', error.response?.data?.error || 'Failed to update email');
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmation !== 'DELETE') {
+      Alert.alert('Error', 'Please type DELETE to confirm account deletion');
+      return;
+    }
+
+    Alert.alert(
+      'Confirm Delete',
+      'Are you sure you want to permanently delete your account? This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete('/auth/me');
+              await api.logout();
+              router.replace('/login');
+            } catch (error) {
+              Alert.alert('Error', error.response?.data?.error || 'Failed to delete account');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Update Security Settings</Text>
-
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Change Password</Text>
-        
-        <Text style={styles.inputLabel}>Current Password</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter current password"
+          placeholder="Current Password"
           value={currentPassword}
           onChangeText={setCurrentPassword}
           secureTextEntry
-          returnKeyType="next"
         />
-
-        <Text style={styles.inputLabel}>New Password</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter new password"
+          placeholder="New Password"
           value={newPassword}
           onChangeText={setNewPassword}
           secureTextEntry
-          returnKeyType="next"
         />
-
-        <Text style={styles.inputLabel}>Confirm New Password</Text>
         <TextInput
           style={styles.input}
-          placeholder="Confirm new password"
+          placeholder="Confirm New Password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
-          returnKeyType="done"
         />
-
         <TouchableOpacity 
           style={[styles.button, styles.updateButton]} 
           onPress={handleUpdatePassword}
@@ -117,23 +133,38 @@ export default function Security() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Change Email</Text>
-        
-        <Text style={styles.inputLabel}>New Email</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter new email"
+          placeholder="New Email Address"
           value={newEmail}
           onChangeText={setNewEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          returnKeyType="done"
         />
-
         <TouchableOpacity 
           style={[styles.button, styles.updateButton]} 
           onPress={handleUpdateEmail}
         >
           <Text style={styles.buttonText}>Update Email</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Delete Account</Text>
+        <Text style={styles.warningText}>
+          This action is permanent and cannot be undone. Type DELETE to confirm.
+        </Text>
+        <TextInput
+          style={[styles.input, styles.deleteInput]}
+          placeholder="Type DELETE to confirm"
+          value={deleteConfirmation}
+          onChangeText={setDeleteConfirmation}
+        />
+        <TouchableOpacity 
+          style={[styles.button, styles.deleteButton]} 
+          onPress={handleDeleteAccount}
+        >
+          <Text style={styles.buttonText}>Delete Account</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -146,45 +177,57 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#000000',
-  },
   section: {
     marginBottom: 30,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333333',
-  },
-  inputLabel: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: '#666666',
+    color: '#333',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 45,
     borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 15,
     marginBottom: 15,
-    paddingHorizontal: 10,
-    borderRadius: 5,
+    backgroundColor: '#f9f9f9',
+  },
+  deleteInput: {
+    borderColor: '#ff6b6b',
   },
   button: {
     padding: 15,
-    borderRadius: 5,
-    marginTop: 10,
+    borderRadius: 8,
+    alignItems: 'center',
   },
   updateButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#cc866f',
+  },
+  deleteButton: {
+    backgroundColor: '#ff6b6b',
   },
   buttonText: {
-    color: 'white',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  warningText: {
+    color: '#ff6b6b',
+    marginBottom: 10,
+    fontSize: 14,
   },
 }); 
