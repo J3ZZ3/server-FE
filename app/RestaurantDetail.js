@@ -3,14 +3,12 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, Image, An
 import { Video } from 'expo-av';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from './constants/colors';
-import * as Location from 'expo-location';
-import api from './services/api';
+import api, { fetchRestaurantDetails } from './services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import RestaurantHeader from './components/RestaurantHeader';
 import QuickInfo from './components/QuickInfo';
 import MenuPreview from './components/MenuPreview';
-import LocationMap from './components/LocationMap';
 
 const RestaurantDetailScreen = () => {
   const { restaurantId, token } = useLocalSearchParams();
@@ -18,37 +16,26 @@ const RestaurantDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const router = useRouter();
-  const [location, setLocation] = useState(null);
   
-  // Animated value for background
-  const animatedValue = new Animated.Value(0);
   const image = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/windows-9083830_960_720.jpg'; // Placeholder for restaurant image
 
   useEffect(() => {
-    const fetchRestaurantDetails = async () => {
+    const fetchDetails = async () => {
       try {
-        const response = await api.get(`/restaurants/${restaurantId}`);
-        setRestaurant(response.data);
+        const restaurantData = await fetchRestaurantDetails(restaurantId);
+        setRestaurant(restaurantData);
       } catch (error) {
         setError('Failed to load restaurant details');
+        Alert.alert('Error', error.message || 'Could not load restaurant details. Please try again.');
+        console.error('Error fetching restaurant details:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchRestaurantDetails();
+    fetchDetails();
   }, [restaurantId]);
 
-  useEffect(() => {
-    // Request location permissions and get initial location
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required to show the map.');
-        return;
-      }
-    })();
-  }, []);
 
   const handleReservePress = async () => {
     try {
@@ -168,8 +155,12 @@ const RestaurantDetailScreen = () => {
             <Text style={styles.description}>{restaurant.description}</Text>
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Location</Text>
+            <Text style={styles.description}>{restaurant.location}</Text>
+          </View>
+
           <MenuPreview menu={restaurant.menu} />
-          <LocationMap restaurant={restaurant} />
 
           {/* Contact and Actions */}
           <View style={styles.actionContainer}>
@@ -184,6 +175,7 @@ const RestaurantDetailScreen = () => {
               <Text style={styles.primaryButtonText}>Reserve a Table</Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </ScrollView>
     </View>
@@ -350,54 +342,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginHorizontal: 20,
-  },
-  mapContainer: {
-    height: 200,
-    marginVertical: 16,
-    borderRadius: 15,
-    overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    borderWidth: 2,
-    borderColor: '#e4d4c6',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  markerContainer: {
-    alignItems: 'center',
-  },
-  marker: {
-    backgroundColor: 'rgba(37, 34, 40, 0.9)',
-    padding: 8,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#e4d4c6',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  markerShadow: {
-    width: 8,
-    height: 8,
-    backgroundColor: '#252228',
-    borderRadius: 4,
-    marginTop: -4,
-    transform: [{ rotate: '45deg' }],
-    borderWidth: 2,
-    borderColor: '#e4d4c6',
   },
   image: {
     width: '100%',

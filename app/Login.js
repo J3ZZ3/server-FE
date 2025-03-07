@@ -94,14 +94,8 @@ export default function LoginScreen() {
     
           console.log('Token:', response.token);
     
-        } catch (err) {
-          const errorMessage = err.error || 'Login failed. Please try again.';
-          setAlertConfig({
-            title: 'Error',
-            message: errorMessage,
-            type: 'error'
-          });
-          setAlertVisible(true);
+        } catch (error) {
+          Alert.alert('Login Error', error.message || 'Invalid credentials. Please try again.');
         } finally {
           setLoading(false);
         }

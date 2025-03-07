@@ -13,12 +13,18 @@
     "ios": {
       "splash": {
         "splashScreenStayOpen": 4000
+      },
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show restaurant locations."
       }
     },
     "android": {
       "package": "com.koji.Omakase",
       "versionCode": 1,
-      "permissions": [],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "splash": {
         "splashScreenStayOpen": 4000
       }

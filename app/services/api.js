@@ -20,8 +20,15 @@ export const setAuthHeader = (token) => {
 
 // Authentication functions
 export const login = async (credentials) => {
-  const response = await api.post('/auth/login', credentials);
-  return response.data;
+  try {
+    const response = await api.post('/auth/login', credentials);
+    return response.data;
+  } catch (error) {
+    // Check if the error response exists and has a message
+    const errorMessage = error.response?.data?.message || 
+                         (error.response?.status === 401 ? 'Invalid credentials. Please check your username and password.' : 'Login failed. Please try again.');
+    throw new Error(errorMessage); // Throw a new error with the message
+  }
 };
 
 export const register = async (userData) => {
@@ -200,6 +207,18 @@ export const uploadProfileImage = async (imageUri) => {
     console.error('Upload profile image error:', error);
     throw error;
   }
+};
+
+// Add this function to fetch restaurant details
+export const fetchRestaurantDetails = async (restaurantId) => {
+  const response = await api.get(`/restaurants/${restaurantId}`);
+  return response.data;
+};
+
+// Add this function to fetch reservation details
+export const fetchReservationDetails = async (reservationId) => {
+  const response = await api.get(`/reservations/${reservationId}`);
+  return response.data;
 };
 
 export default api; 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, SafeAreaView, ImageBackground } from 'react-native';
-import api from './services/api';
+import api, { fetchReservationDetails } from './services/api';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import CustomButton from './components/CustomButton';
@@ -12,10 +12,7 @@ const defaultRestaurantImage = 'https://cdn.pixabay.com/photo/2024/09/29/17/02/r
 
 const ReservationDetailScreen = () => {
   const { reservationId, token } = useLocalSearchParams();
-  const [reservation, setReservation] = useState({
-    numberOfGuests: 1,
-    basePrice: 0,
-  });
+  const [reservation, setReservation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showPayPal, setShowPayPal] = useState(false);
@@ -24,30 +21,20 @@ const ReservationDetailScreen = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchReservationDetails = async () => {
+    const fetchDetails = async () => {
       try {
-        const response = await api.get(`/reservations/${reservationId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        const restaurantResponse = await api.get(`/restaurants/${response.data.restaurantId._id}`);
-        const basePrice = restaurantResponse.data.pricing.basePrice;
-        
-        setReservation({
-          ...response.data,
-          basePrice: basePrice
-        });
-        
-        console.log('Fetched reservation:', response.data); // For debugging
-      } catch (err) {
-        setError(err.response?.data?.message || 'Failed to fetch reservation details');
+        const reservationData = await fetchReservationDetails(reservationId);
+        setReservation(reservationData);
+      } catch (error) {
+        setError('Failed to load reservation details');
+        console.error('Error fetching reservation details:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchReservationDetails();
-  }, [reservationId, token]);
+    fetchDetails();
+  }, [reservationId]);
 
   const handlePayment = async () => {
     try {
@@ -70,10 +57,10 @@ const ReservationDetailScreen = () => {
         throw new Error('No approval URL received from server');
       }
     } catch (error) {
-      console.error('Payment initialization error:', error.response?.data || error.message);
+      console.error('Payment initialization error:', error.message);
       Alert.alert(
         'Payment Error',
-        error.response?.data?.message || 'Failed to initialize payment. Please try again.'
+        error.message || 'Failed to initialize payment. Please try again.'
       );
     }
   };
