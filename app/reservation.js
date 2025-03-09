@@ -20,22 +20,30 @@ export default function ReservationScreen() {
         return;
       }
 
-      console.log('Sending reservation details:', reservationDetails);
-
-      const response = await createReservation({
+      // Format the date properly
+      const formattedDetails = {
         ...reservationDetails,
         restaurantId,
         restaurantName,
-        timeSlot: reservationDetails.time
-      });
+        timeSlot: reservationDetails.time,
+        date: new Date(reservationDetails.date).toISOString()
+      };
+
+      console.log('Sending reservation details:', formattedDetails);
+
+      const response = await createReservation(formattedDetails);
 
       console.log('Reservation response:', response);
+
+      if (!response || !response.reservation) {
+        throw new Error('Invalid response from server');
+      }
 
       // Calculate total amount using the passed basePrice
       const totalAmount = reservationDetails.guests * basePrice;
 
       router.push({
-        pathname: '/ReservationCost',
+        pathname: '/reservationCost',
         params: {
           reservationId: response.reservation._id,
           amount: totalAmount,
@@ -50,17 +58,25 @@ export default function ReservationScreen() {
       });
     } catch (err) {
       console.error('Reservation error:', err);
-      if (err.error === 'Invalid token') {
+      
+      if (err.status === 401) {
         Alert.alert(
           'Session Expired',
-          'Please login again to continue'
+          'Please login again to continue',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/Login')
+            }
+          ]
         );
-        router.push('/Login');
         return;
       }
+
       Alert.alert(
         'Reservation Failed',
-        err.message || 'Failed to make a reservation'
+        err.message || 'An unexpected error occurred while creating your reservation. Please try again.',
+        [{ text: 'OK' }]
       );
     }
   };

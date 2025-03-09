@@ -28,7 +28,7 @@ export default function ReservationCostScreen() {
 
   const handlePayment = () => {
     router.push({
-      pathname: '/Payment',
+      pathname: '/payment',
       params: { reservationId, amount, token }
     });
   };

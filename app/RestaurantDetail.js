@@ -57,7 +57,7 @@ const RestaurantDetailScreen = () => {
       }
 
       router.push({
-        pathname: '/Reservation',
+        pathname: '/reservation',
         params: {
           restaurantId: restaurantId,
           restaurantName: restaurant?.name,

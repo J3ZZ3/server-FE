@@ -45,11 +45,19 @@ export default function PaymentScreen() {
 
         setLoading(true);
         
+        console.log('Sending capture request:', {
+          orderId: paypalOrderId,
+          payerId: PayerID,
+          reservationId
+        });
+        
         const response = await api.post('/payments/capture-order', {
           orderId: paypalOrderId,
           payerId: PayerID,
           reservationId
         });
+
+        console.log('Capture response:', response.data);
 
         if (response.data.status === 'success') {
           Alert.alert(
@@ -58,7 +66,7 @@ export default function PaymentScreen() {
             [
               {
                 text: 'OK',
-                onPress: () => router.replace('/UserReservations')
+                onPress: () => router.replace('/RestaurantList')
               }
             ]
           );
@@ -66,14 +74,18 @@ export default function PaymentScreen() {
           throw new Error('Payment capture failed');
         }
       } catch (error) {
-        console.error('Payment capture error:', error);
+        console.error('Payment capture error details:', error.response?.data || error);
         Alert.alert(
           'Error',
           'Payment was processed but confirmation failed. Please contact support.',
           [
             {
-              text: 'OK',
+              text: 'View Reservations',
               onPress: () => router.replace('/UserReservations')
+            },
+            {
+              text: 'Close',
+              style: 'cancel'
             }
           ]
         );

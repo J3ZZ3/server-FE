@@ -82,15 +82,34 @@ export const createReservation = async (reservationData) => {
       specialRequests: reservationData.specialRequests || '',
       seatingPreference: (reservationData.seatingPreference || 'indoor').toLowerCase(),
       dietaryRestrictions: reservationData.dietaryRestrictions || '',
-      tablePreference: reservationData.tablePreference || 'No Preference',
-      basePrice: reservationData.basePrice
+      tablePreference: reservationData.tablePreference || 'No Preference'
     };
+
+    console.log('Sending formatted reservation data:', formattedData);
 
     const response = await api.post('/reservations', formattedData);
     return response.data;
   } catch (error) {
-    console.error('Reservation creation error:', error);
-    throw error.response?.data || error;
+    console.error('Reservation creation error details:', error.response?.data);
+    
+    if (error.response) {
+      throw {
+        message: error.response.data?.error || 'Failed to create reservation',
+        status: error.response.status,
+        details: error.response.data
+      };
+    } else if (error.request) {
+      throw {
+        message: 'No response from server. Please check your connection.',
+        status: 0
+      };
+    } else {
+      throw {
+        message: 'Failed to create reservation',
+        status: 500,
+        details: error.message
+      };
+    }
   }
 };
 
